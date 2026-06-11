@@ -141,7 +141,7 @@
     <div class="auth-card">
       <div class="auth-header">
         <h1>Bienvenido</h1>
-        <p>Creá tu perfil cinematográfico</p>
+        <p id="auth-subtitle">Ingresá a tu perfil cinematográfico</p>
       </div>
 
       <div class="tabs">
@@ -198,6 +198,8 @@
       document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
       document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
       document.getElementById(`panel-${tab}`).classList.add('active');
+      document.getElementById('auth-subtitle').textContent =
+        tab === 'login' ? 'Ingresá a tu perfil cinematográfico' : 'Creá tu perfil cinematográfico';
     };
 
     function showMsg(id, text, type) {
