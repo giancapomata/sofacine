@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sofacine — Mi perfil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080709; --bg2: #111019; --bg3: #191821;
+      --gold: #e8b86d; --gold-dim: #9a7438;
+      --text: #f0eee8; --text-muted: #7a7880; --text-dim: #3a3840;
+      --border: rgba(255,255,255,0.06); --border-gold: rgba(232,184,109,0.2);
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 300; line-height: 1.6; min-height: 100vh; }
+
+    body::before {
+      content: ''; position: fixed; inset: -50%; width: 200%; height: 200%;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: 0.4;
+    }
+
+    .content { position: relative; z-index: 1; }
+
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.5rem 2.5rem; border-bottom: 1px solid var(--border);
+    }
+    .logo { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--gold); letter-spacing: -0.02em; text-decoration: none; }
+    .logo span { font-style: italic; color: var(--text); }
+    .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+    .nav-link { color: var(--text-muted); text-decoration: none; font-size: 0.875rem; transition: color 0.2s; cursor: pointer; }
+    .nav-link:hover { color: var(--text); }
+    .nav-username { color: var(--gold); font-size: 0.875rem; }
+
+    /* PERFIL HERO */
+    .perfil-hero {
+      max-width: 900px; margin: 0 auto; padding: 3rem 2.5rem 2rem;
+      display: flex; gap: 2.5rem; align-items: flex-start;
+    }
+
+    .avatar-wrap { flex-shrink: 0; }
+
+    .avatar {
+      width: 90px; height: 90px; border-radius: 50%;
+      background: var(--bg3); border: 2px solid var(--border-gold);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--gold);
+      overflow: hidden; cursor: pointer; position: relative;
+    }
+
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.2s; border-radius: 50%;
+      font-size: 0.7rem; color: white; text-align: center;
+    }
+    .avatar:hover .avatar-overlay { opacity: 1; }
+
+    .perfil-info { flex: 1; }
+
+    .perfil-username {
+      font-family: 'DM Serif Display', serif; font-size: 1.8rem;
+      color: var(--text); letter-spacing: -0.02em; margin-bottom: 0.25rem;
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+
+    .edit-btn {
+      font-family: 'DM Sans', sans-serif; font-size: 0.72rem; font-weight: 500;
+      color: var(--text-muted); background: none; border: 1px solid var(--border);
+      border-radius: 999px; padding: 0.2rem 0.75rem; cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .edit-btn:hover { color: var(--text); border-color: var(--text-muted); }
+
+    .perfil-bio {
+      font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;
+      max-width: 500px; line-height: 1.6;
+    }
+    .perfil-bio.placeholder { color: var(--text-dim); font-style: italic; }
+
+    .perfil-stats { display: flex; gap: 2rem; }
+    .stat { text-align: center; }
+    .stat-num { font-family: 'DM Serif Display', serif; font-size: 1.4rem; color: var(--text); display: block; line-height: 1; }
+    .stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+    /* MAIN LAYOUT */
+    .perfil-main {
+      max-width: 900px; margin: 0 auto; padding: 0 2.5rem 4rem;
+      display: grid; grid-template-columns: 1fr 280px; gap: 3rem;
+    }
+
+    /* SECCIONES */
+    .section { margin-bottom: 2.5rem; }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.25rem; padding-bottom: 0.875rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title {
+      font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--text);
+    }
+    .section-action {
+      font-size: 0.75rem; color: var(--gold-dim); cursor: pointer;
+      background: none; border: none; font-family: 'DM Sans', sans-serif;
+      transition: color 0.2s;
+    }
+    .section-action:hover { color: var(--gold); }
+
+    /* TOP 5 */
+    .top5-list { display: flex; flex-direction: column; gap: 0.6rem; }
+
+    .top5-item {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 0.75rem 1rem; background: var(--bg2);
+      border: 1px solid var(--border); border-radius: 10px;
+      transition: border-color 0.2s;
+    }
+    .top5-item:hover { border-color: var(--border-gold); }
+
+    .top5-num {
+      font-family: 'DM Serif Display', serif; font-size: 1.1rem;
+      color: var(--text-dim); min-width: 20px; text-align: center;
+    }
+
+    .top5-titulo {
+      flex: 1; font-size: 0.9rem; color: var(--text);
+    }
+
+    .top5-empty {
+      flex: 1; font-size: 0.85rem; color: var(--text-dim);
+      font-style: italic;
+    }
+
+    .top5-edit-icon {
+      font-size: 0.75rem; color: var(--text-dim); cursor: pointer;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .top5-item:hover .top5-edit-icon { opacity: 1; }
+
+    /* HISTORIAL */
+    .historial-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .historial-item {
+      padding: 1rem 1.125rem; background: var(--bg2);
+      border: 1px solid var(--border); border-radius: 10px;
+    }
+
+    .historial-top {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 0.4rem;
+    }
+
+    .historial-titulo {
+      font-size: 0.95rem; font-weight: 500; color: var(--text);
+    }
+
+    .historial-fecha {
+      font-size: 0.72rem; color: var(--text-dim); flex-shrink: 0; margin-left: 1rem;
+    }
+
+    .historial-meta {
+      font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem;
+    }
+
+    .stars { display: flex; gap: 3px; }
+    .star {
+      font-size: 0.85rem; cursor: pointer; color: var(--text-dim);
+      transition: color 0.15s;
+    }
+    .star.filled { color: var(--gold); }
+
+    .historial-review {
+      font-size: 0.82rem; color: var(--text-muted); margin-top: 0.5rem;
+      line-height: 1.5; font-style: italic;
+    }
+
+    .empty-state {
+      padding: 2.5rem; text-align: center;
+      border: 1px dashed var(--border); border-radius: 10px;
+    }
+    .empty-state p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; }
+
+    /* SIDEBAR */
+    .sidebar { }
+
+    .sidebar-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem;
+    }
+
+    .sidebar-title {
+      font-size: 0.72rem; font-weight: 500; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem;
+    }
+
+    .proxima-funcion {
+      border-color: var(--border-gold);
+    }
+
+    .proxima-titulo {
+      font-family: 'DM Serif Display', serif; font-size: 1.1rem;
+      color: var(--text); margin-bottom: 0.25rem;
+    }
+
+    .proxima-meta { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1rem; }
+
+    .btn-secondary {
+      width: 100%; background: var(--gold); color: #080709;
+      border: none; border-radius: 8px; padding: 0.75rem;
+      font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500;
+      cursor: pointer; transition: background 0.2s;
+      text-decoration: none; display: block; text-align: center;
+    }
+    .btn-secondary:hover { background: #f0c97a; }
+
+    /* MODAL EDITAR */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+      z-index: 100; display: none; align-items: center; justify-content: center;
+      padding: 1.5rem;
+    }
+    .modal-overlay.visible { display: flex; }
+
+    .modal {
+      background: var(--bg2); border: 1px solid var(--border-gold);
+      border-radius: 16px; padding: 2rem; width: 100%; max-width: 480px;
+      max-height: 90vh; overflow-y: auto;
+    }
+
+    .modal h2 {
+      font-family: 'DM Serif Display', serif; font-size: 1.3rem;
+      color: var(--text); margin-bottom: 1.5rem;
+    }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-group label {
+      display: block; font-size: 0.72rem; color: var(--text-muted);
+      margin-bottom: 0.4rem; letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .form-group input, .form-group textarea {
+      width: 100%; background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.7rem 0.875rem; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 300;
+      outline: none; transition: border-color 0.2s;
+      resize: none;
+    }
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--gold-dim); }
+    .form-group input::placeholder, .form-group textarea::placeholder { color: var(--text-dim); }
+
+    .modal-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+
+    .btn-cancel {
+      flex: 1; background: none; color: var(--text-muted);
+      border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;
+      font-family: 'DM Sans', sans-serif; font-size: 0.875rem; cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .btn-cancel:hover { color: var(--text); border-color: var(--text-muted); }
+
+    .btn-save {
+      flex: 2; background: var(--gold); color: #080709;
+      border: none; border-radius: 8px; padding: 0.75rem;
+      font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .btn-save:hover { background: #f0c97a; }
+    .btn-save:disabled { background: var(--gold-dim); cursor: not-allowed; }
+
+    /* LOADING */
+    .loading {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 60vh; font-size: 0.9rem; color: var(--text-muted);
+    }
+
+    @media (max-width: 700px) {
+      .perfil-hero { flex-direction: column; gap: 1.5rem; padding: 2rem 1.5rem 1.5rem; }
+      .perfil-main { grid-template-columns: 1fr; padding: 0 1.5rem 3rem; }
+      .sidebar { order: -1; }
+      nav { padding: 1.25rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="content">
+  <nav>
+    <a href="/index.html" class="logo">sofa<span>cine</span></a>
+    <div class="nav-right">
+      <span class="nav-username" id="nav-username"></span>
+      <span class="nav-link" onclick="cerrarSesion()">Salir</span>
+    </div>
+  </nav>
+
+  <div id="app">
+    <div class="loading">Cargando tu perfil...</div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR PERFIL -->
+<div class="modal-overlay" id="modal-perfil">
+  <div class="modal">
+    <h2>Editar perfil</h2>
+    <div class="form-group">
+      <label>Nombre de usuario</label>
+      <input type="text" id="edit-username" placeholder="tu_usuario" />
+    </div>
+    <div class="form-group">
+      <label>Bio</label>
+      <textarea id="edit-bio" rows="3" placeholder="Cinefilo de corazon..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="cerrarModal('modal-perfil')">Cancelar</button>
+      <button class="btn-save" id="btn-save-perfil" onclick="guardarPerfil()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR TOP 5 -->
+<div class="modal-overlay" id="modal-top5">
+  <div class="modal">
+    <h2>Tu top 5 de peliculas</h2>
+    <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1.5rem;">Tus 5 peliculas favoritas de todos los tiempos.</p>
+    <div id="top5-inputs"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="cerrarModal('modal-top5')">Cancelar</button>
+      <button class="btn-save" id="btn-save-top5" onclick="guardarTop5()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+  const supabase = createClient(
+    'https://wkuhwajoebdfntcokilx.supabase.co',
+    'sb_publishable_3G7eC0rb4fcGHQKzq6qidQ_54IkDdtM'
+  );
+
+  let currentUser = null;
+  let perfil = null;
+  let top5 = [];
+  let historial = [];
+
+  // Verificar sesion
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { window.location.href = '/auth.html'; }
+  else {
+    currentUser = session.user;
+    await cargarPerfil();
+  }
+
+  async function cargarPerfil() {
+    // Cargar perfil
+    const { data: p } = await supabase
+      .from('perfiles').select('*').eq('id', currentUser.id).single();
+    perfil = p;
+
+    // Cargar top5
+    const { data: t } = await supabase
+      .from('top5').select('*').eq('usuario_id', currentUser.id).order('posicion');
+    top5 = t || [];
+
+    // Cargar historial (reservas confirmadas)
+    const { data: h } = await supabase
+      .from('reservas').select('*').eq('email', currentUser.email).eq('estado', 'confirmado').order('created_at', { ascending: false });
+    historial = h || [];
+
+    document.getElementById('nav-username').textContent = perfil?.username || currentUser.email;
+    renderPerfil();
+  }
+
+  function renderPerfil() {
+    const inicial = (perfil?.username || currentUser.email)[0].toUpperCase();
+    const pelisVistas = historial.length;
+
+    document.getElementById('app').innerHTML = `
+      <div class="perfil-hero">
+        <div class="avatar-wrap">
+          <div class="avatar" onclick="abrirModal('modal-perfil')">
+            ${perfil?.avatar_url
+              ? `<img src="${perfil.avatar_url}" alt="avatar" />`
+              : inicial}
+            <div class="avatar-overlay">Editar</div>
+          </div>
+        </div>
+        <div class="perfil-info">
+          <div class="perfil-username">
+            ${perfil?.username || 'Sin usuario'}
+            <button class="edit-btn" onclick="abrirModalPerfil()">Editar perfil</button>
+          </div>
+          <p class="perfil-bio ${!perfil?.bio ? 'placeholder' : ''}">
+            ${perfil?.bio || 'Agrega una bio para que otros te conozcan...'}
+          </p>
+          <div class="perfil-stats">
+            <div class="stat">
+              <span class="stat-num">${pelisVistas}</span>
+              <span class="stat-label">Peliculas vistas</span>
+            </div>
+            <div class="stat">
+              <span class="stat-num">${top5.filter(t => t.titulo).length}</span>
+              <span class="stat-label">Top 5</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="perfil-main">
+        <div class="perfil-columna">
+          <!-- TOP 5 -->
+          <div class="section">
+            <div class="section-header">
+              <h2 class="section-title">Mis 5 peliculas favoritas</h2>
+              <button class="section-action" onclick="abrirModalTop5()">Editar</button>
+            </div>
+            <div class="top5-list">
+              ${[1,2,3,4,5].map(n => {
+                const item = top5.find(t => t.posicion === n);
+                return `
+                  <div class="top5-item">
+                    <span class="top5-num">${n}</span>
+                    ${item?.titulo
+                      ? `<span class="top5-titulo">${item.titulo}</span>`
+                      : `<span class="top5-empty">Sin elegir</span>`}
+                    <span class="top5-edit-icon" onclick="abrirModalTop5()">✎</span>
+                  </div>`;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- HISTORIAL -->
+          <div class="section">
+            <div class="section-header">
+              <h2 class="section-title">Funciones vistas en Sofacine</h2>
+            </div>
+            ${historial.length === 0
+              ? `<div class="empty-state">
+                  <p>Todavia no viste ninguna funcion en Sofacine.<br/>
+                  Cuando veas tu primera pelicula, va a aparecer aca.</p>
+                 </div>`
+              : `<div class="historial-list">
+                  ${historial.map(h => `
+                    <div class="historial-item">
+                      <div class="historial-top">
+                        <span class="historial-titulo">${h.pelicula}</span>
+                        <span class="historial-fecha">${formatFecha(h.fecha_funcion)}</span>
+                      </div>
+                      <p class="historial-meta">Vista en Sofacine</p>
+                      <div class="stars">
+                        ${[1,2,3,4,5].map(s =>
+                          `<span class="star ${(h.rating||0)>=s?'filled':''}">★</span>`
+                        ).join('')}
+                      </div>
+                      ${h.review ? `<p class="historial-review">"${h.review}"</p>` : ''}
+                    </div>`).join('')}
+                 </div>`}
+          </div>
+        </div>
+
+        <div class="sidebar">
+          <div class="sidebar-card proxima-funcion">
+            <p class="sidebar-title">Proxima funcion</p>
+            <p class="proxima-titulo">Metropolis</p>
+            <p class="proxima-meta">Fritz Lang · Sabado 14 de junio · 20:30 hs</p>
+            <a href="/index.html" class="btn-secondary">Reservar entrada</a>
+          </div>
+
+          <div class="sidebar-card">
+            <p class="sidebar-title">Mi cuenta</p>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.5rem;">${currentUser.email}</p>
+            <p style="font-size:0.75rem;color:var(--text-dim);">Miembro desde ${formatFecha(currentUser.created_at)}</p>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function formatFecha(fecha) {
+    if (!fecha) return '';
+    return new Date(fecha).toLocaleDateString('es-PY', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  // MODAL PERFIL
+  window.abrirModalPerfil = function() {
+    document.getElementById('edit-username').value = perfil?.username || '';
+    document.getElementById('edit-bio').value = perfil?.bio || '';
+    abrirModal('modal-perfil');
+  };
+
+  window.guardarPerfil = async function() {
+    const username = document.getElementById('edit-username').value.trim();
+    const bio = document.getElementById('edit-bio').value.trim();
+    if (!username) return;
+
+    const btn = document.getElementById('btn-save-perfil');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+
+    await supabase.from('perfiles').upsert({
+      id: currentUser.id, username, bio, avatar_url: perfil?.avatar_url || ''
+    });
+
+    perfil = { ...perfil, username, bio };
+    document.getElementById('nav-username').textContent = username;
+    cerrarModal('modal-perfil');
+    renderPerfil();
+    btn.disabled = false; btn.textContent = 'Guardar';
+  };
+
+  // MODAL TOP 5
+  window.abrirModalTop5 = function() {
+    const container = document.getElementById('top5-inputs');
+    container.innerHTML = [1,2,3,4,5].map(n => {
+      const item = top5.find(t => t.posicion === n);
+      return `
+        <div class="form-group">
+          <label>Pelicula ${n}</label>
+          <input type="text" id="top5-${n}" placeholder="Nombre de la pelicula" value="${item?.titulo || ''}" />
+        </div>`;
+    }).join('');
+    abrirModal('modal-top5');
+  };
+
+  window.guardarTop5 = async function() {
+    const btn = document.getElementById('btn-save-top5');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+
+    // Borrar top5 actual
+    await supabase.from('top5').delete().eq('usuario_id', currentUser.id);
+
+    // Insertar nuevo
+    const inserts = [1,2,3,4,5]
+      .map(n => ({ usuario_id: currentUser.id, posicion: n, titulo: document.getElementById(`top5-${n}`).value.trim() }))
+      .filter(i => i.titulo);
+
+    if (inserts.length > 0) {
+      await supabase.from('top5').insert(inserts);
+    }
+
+    const { data: t } = await supabase.from('top5').select('*').eq('usuario_id', currentUser.id).order('posicion');
+    top5 = t || [];
+
+    cerrarModal('modal-top5');
+    renderPerfil();
+    btn.disabled = false; btn.textContent = 'Guardar';
+  };
+
+  window.abrirModal = function(id) { document.getElementById(id).classList.add('visible'); };
+  window.cerrarModal = function(id) { document.getElementById(id).classList.remove('visible'); };
+
+  window.cerrarSesion = async function() {
+    await supabase.auth.signOut();
+    window.location.href = '/auth.html';
+  };
+</script>
+</body>
+</html>
