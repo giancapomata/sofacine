@@ -293,7 +293,7 @@
     <a href="/index.html" class="logo">sofa<span>cine</span></a>
     <div class="nav-right">
       <span class="nav-username" id="nav-username"></span>
-      <span class="nav-link" onclick="cerrarSesion()">Salir</span>
+      <a href="/" class="nav-link">Cartelera</a>
     </div>
   </nav>
 
@@ -472,8 +472,10 @@
 
           <div class="sidebar-card">
             <p class="sidebar-title">Mi cuenta</p>
-            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.5rem;">${currentUser.email}</p>
-            <p style="font-size:0.75rem;color:var(--text-dim);">Miembro desde ${formatFecha(currentUser.created_at)}</p>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.25rem;">${currentUser.email}</p>
+            <p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:1rem;">Miembro desde ${formatFecha(currentUser.created_at)}</p>
+            <button onclick="cerrarSesion()" style="width:100%;background:none;border:1px solid var(--border);border-radius:8px;padding:0.65rem;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer;margin-bottom:0.5rem;transition:color 0.2s,border-color 0.2s;" onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--text-muted)'" onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">Cerrar sesion</button>
+            <button onclick="confirmarEliminar()" style="width:100%;background:none;border:1px solid rgba(224,112,112,0.2);border-radius:8px;padding:0.65rem;color:#e07070;font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background='rgba(224,112,112,0.08)'" onmouseout="this.style.background='none'">Eliminar cuenta</button>
           </div>
         </div>
       </div>`;
@@ -546,6 +548,25 @@
     cerrarModal('modal-top5');
     renderPerfil();
     btn.disabled = false; btn.textContent = 'Guardar';
+  };
+
+  window.cerrarSesion = async function() {
+    await supabase.auth.signOut();
+    window.location.href = '/auth';
+  };
+
+  window.confirmarEliminar = function() {
+    if (confirm('Estas seguro que queres eliminar tu cuenta? Esta accion no se puede deshacer.')) {
+      eliminarCuenta();
+    }
+  };
+
+  window.eliminarCuenta = async function() {
+    // Borrar datos del usuario
+    await supabase.from('top5').delete().eq('usuario_id', currentUser.id);
+    await supabase.from('perfiles').delete().eq('id', currentUser.id);
+    await supabase.auth.signOut();
+    window.location.href = '/auth';
   };
 
   window.abrirModal = function(id) { document.getElementById(id).classList.add('visible'); };
