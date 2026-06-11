@@ -302,6 +302,9 @@
   </div>
 </div>
 
+<!-- Input file oculto para el avatar -->
+<input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="subirAvatar(this)" />
+
 <!-- MODAL EDITAR PERFIL -->
 <div class="modal-overlay" id="modal-perfil">
   <div class="modal">
@@ -382,7 +385,7 @@
     document.getElementById('app').innerHTML = `
       <div class="perfil-hero">
         <div class="avatar-wrap">
-          <div class="avatar" onclick="abrirModal('modal-perfil')">
+          <div class="avatar" onclick="document.getElementById('avatar-input').click()">
             ${perfil?.avatar_url
               ? `<img src="${perfil.avatar_url}" alt="avatar" />`
               : inicial}
@@ -548,6 +551,39 @@
     cerrarModal('modal-top5');
     renderPerfil();
     btn.disabled = false; btn.textContent = 'Guardar';
+  };
+
+  window.subirAvatar = async function(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    if (file.size > 5242880) {
+      alert('La foto no puede superar 5MB');
+      return;
+    }
+
+    // Preview inmediato
+    const reader = new FileReader();
+    reader.onload = e => {
+      const avatarEl = document.querySelector('.avatar');
+      if (avatarEl) avatarEl.innerHTML = `<img src="${e.target.result}" alt="avatar" /><div class="avatar-overlay">Editar</div>`;
+    };
+    reader.readAsDataURL(file);
+
+    // Subir a Supabase Storage
+    const ext = file.name.split('.').pop();
+    const path = `${currentUser.id}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true });
+
+    if (error) { alert('Error al subir la foto, intentá de nuevo'); return; }
+
+    // URL pública
+    const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+    await supabase.from('perfiles').update({ avatar_url: data.publicUrl }).eq('id', currentUser.id);
+    perfil = { ...perfil, avatar_url: data.publicUrl };
   };
 
   window.cerrarSesion = async function() {
