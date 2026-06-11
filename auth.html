@@ -141,7 +141,7 @@
     <div class="auth-card">
       <div class="auth-header">
         <h1>Bienvenido</h1>
-        <p>Tu identidad cinematografica te espera</p>
+        <p>Creá tu perfil cinematográfico</p>
       </div>
 
       <div class="tabs">
@@ -221,7 +221,7 @@
         btn.disabled = false; btn.textContent = 'Ingresar';
       } else {
         showMsg('msg-login', 'Bienvenido! Redirigiendo...', 'success');
-        setTimeout(() => window.location.href = '/perfil.html', 1000);
+        setTimeout(() => window.location.href = '/', 1000);
       }
     };
 
@@ -258,9 +258,9 @@
       btn.disabled = false; btn.textContent = 'Crear cuenta';
     };
 
-    // Si ya esta logueado, redirigir al perfil
+    // Si ya esta logueado, redirigir al index
     const { data: { session } } = await supabase.auth.getSession();
-    if (session) window.location.href = '/perfil.html';
+    if (session) window.location.href = '/';
   </script>
 </body>
 </html>
