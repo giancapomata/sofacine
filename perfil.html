@@ -7,7 +7,41 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
   <style>
+    /* CROP MODAL */
+    .crop-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+      z-index: 200; display: none; align-items: center; justify-content: center;
+      padding: 1.5rem;
+    }
+    .crop-modal-overlay.visible { display: flex; }
+    .crop-modal {
+      background: var(--bg2); border: 1px solid var(--border-gold);
+      border-radius: 16px; padding: 1.5rem; width: 100%; max-width: 420px;
+    }
+    .crop-modal h3 {
+      font-family: 'DM Serif Display', serif; font-size: 1.1rem;
+      color: var(--text); margin-bottom: 1rem;
+    }
+    .crop-container {
+      width: 100%; height: 300px; background: #000;
+      border-radius: 8px; overflow: hidden; margin-bottom: 1rem;
+    }
+    .crop-container img { max-width: 100%; }
+    .crop-actions { display: flex; gap: 0.75rem; }
+    .btn-crop-cancel {
+      flex: 1; background: none; color: var(--text-muted);
+      border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;
+      font-family: 'DM Sans', sans-serif; font-size: 0.875rem; cursor: pointer;
+    }
+    .btn-crop-save {
+      flex: 2; background: var(--gold); color: #080709;
+      border: none; border-radius: 8px; padding: 0.75rem;
+      font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500;
+      cursor: pointer;
+    }
+    .btn-crop-save:disabled { background: var(--gold-dim); cursor: not-allowed; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #080709; --bg2: #111019; --bg3: #191821;
@@ -303,7 +337,21 @@
 </div>
 
 <!-- Input file oculto para el avatar -->
-<input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="subirAvatar(this)" />
+<input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="abrirCrop(this)" />
+
+<!-- MODAL CROP -->
+<div class="crop-modal-overlay" id="modal-crop">
+  <div class="crop-modal">
+    <h3>Ajusta tu foto</h3>
+    <div class="crop-container">
+      <img id="crop-image" src="" alt="crop" />
+    </div>
+    <div class="crop-actions">
+      <button class="btn-crop-cancel" onclick="cerrarCrop()">Cancelar</button>
+      <button class="btn-crop-save" id="btn-crop-save" onclick="confirmarCrop()">Usar esta foto</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL EDITAR PERFIL -->
 <div class="modal-overlay" id="modal-perfil">
@@ -553,37 +601,80 @@
     btn.disabled = false; btn.textContent = 'Guardar';
   };
 
-  window.subirAvatar = async function(input) {
+  let cropperInstance = null;
+
+  window.abrirCrop = function(input) {
     const file = input.files[0];
     if (!file) return;
 
-    if (file.size > 5242880) {
-      alert('La foto no puede superar 5MB');
-      return;
-    }
-
-    // Preview inmediato
     const reader = new FileReader();
     reader.onload = e => {
-      const avatarEl = document.querySelector('.avatar');
-      if (avatarEl) avatarEl.innerHTML = `<img src="${e.target.result}" alt="avatar" /><div class="avatar-overlay">Editar</div>`;
+      const img = document.getElementById('crop-image');
+      img.src = e.target.result;
+      document.getElementById('modal-crop').classList.add('visible');
+
+      // Destruir instancia anterior si existe
+      if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+
+      setTimeout(() => {
+        cropperInstance = new Cropper(img, {
+          aspectRatio: 1,
+          viewMode: 2,
+          dragMode: 'move',
+          autoCropArea: 0.9,
+          restore: false,
+          guides: false,
+          center: false,
+          highlight: false,
+          cropBoxMovable: false,
+          cropBoxResizable: false,
+          toggleDragModeOnDblclick: false,
+        });
+      }, 100);
     };
     reader.readAsDataURL(file);
+    // Limpiar input para poder subir la misma foto de nuevo
+    input.value = '';
+  };
 
-    // Subir a Supabase Storage
-    const ext = file.name.split('.').pop();
-    const path = `${currentUser.id}.${ext}`;
+  window.cerrarCrop = function() {
+    document.getElementById('modal-crop').classList.remove('visible');
+    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+  };
 
-    const { error } = await supabase.storage
-      .from('avatars')
-      .upload(path, file, { upsert: true });
+  window.confirmarCrop = async function() {
+    if (!cropperInstance) return;
+    const btn = document.getElementById('btn-crop-save');
+    btn.disabled = true; btn.textContent = 'Subiendo...';
 
-    if (error) { alert('Error al subir la foto, intentá de nuevo'); return; }
+    // Obtener canvas recortado a 400x400
+    const canvas = cropperInstance.getCroppedCanvas({ width: 400, height: 400 });
 
-    // URL pública
-    const { data } = supabase.storage.from('avatars').getPublicUrl(path);
-    await supabase.from('perfiles').update({ avatar_url: data.publicUrl }).eq('id', currentUser.id);
-    perfil = { ...perfil, avatar_url: data.publicUrl };
+    canvas.toBlob(async (blob) => {
+      // Preview inmediato
+      const url = URL.createObjectURL(blob);
+      const avatarEl = document.querySelector('.avatar');
+      if (avatarEl) avatarEl.innerHTML = `<img src="${url}" alt="avatar" /><div class="avatar-overlay">Editar</div>`;
+
+      // Subir a Supabase Storage
+      const path = `${currentUser.id}.jpg`;
+      const { error } = await supabase.storage
+        .from('avatars')
+        .upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+
+      if (error) {
+        alert('Error al subir la foto, intentá de nuevo');
+        btn.disabled = false; btn.textContent = 'Usar esta foto';
+        return;
+      }
+
+      const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+      await supabase.from('perfiles').update({ avatar_url: data.publicUrl }).eq('id', currentUser.id);
+      perfil = { ...perfil, avatar_url: data.publicUrl };
+
+      cerrarCrop();
+      btn.disabled = false; btn.textContent = 'Usar esta foto';
+    }, 'image/jpeg', 0.9);
   };
 
   window.cerrarSesion = async function() {
@@ -613,5 +704,6 @@
     window.location.href = '/auth.html';
   };
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 </body>
 </html>
