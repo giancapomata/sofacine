@@ -161,7 +161,24 @@
             <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" />
           </div>
           <button class="btn-primary" id="btn-login" onclick="login()">Ingresar</button>
+          <p style="text-align:center;margin-top:1rem;font-size:0.78rem;">
+            <span onclick="switchTab('olvide')" style="color:var(--text-muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;">Olvide mi contrasena</span>
+          </p>
           <div class="msg" id="msg-login"></div>
+        </div>
+
+        <!-- OLVIDE CONTRASEÑA -->
+        <div class="form-panel" id="panel-olvide">
+          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.25rem;line-height:1.6;">Ingresa tu email y te enviamos un link para restablecer tu contrasena.</p>
+          <div class="form-group">
+            <label for="olvide-email">Email</label>
+            <input type="email" id="olvide-email" placeholder="tu@email.com" autocomplete="email" />
+          </div>
+          <button class="btn-primary" id="btn-olvide" onclick="olvideClave()">Enviar link</button>
+          <p style="text-align:center;margin-top:1rem;font-size:0.78rem;">
+            <span onclick="switchTab('login')" style="color:var(--text-muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;">Volver al login</span>
+          </p>
+          <div class="msg" id="msg-olvide"></div>
         </div>
 
         <!-- REGISTRO -->
@@ -196,10 +213,35 @@
     window.switchTab = function(tab) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
-      document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+      // Solo activar tab si existe el botón
+      const tabBtn = document.querySelector(`[onclick="switchTab('${tab}')"]`);
+      if (tabBtn) tabBtn.classList.add('active');
       document.getElementById(`panel-${tab}`).classList.add('active');
-      document.getElementById('auth-subtitle').textContent =
-        tab === 'login' ? 'Ingresá a tu perfil cinematográfico' : 'Creá tu perfil cinematográfico';
+      const subtitulos = {
+        login: 'Ingresá a tu perfil cinematográfico',
+        registro: 'Creá tu perfil cinematográfico',
+        olvide: 'Recuperá tu contrasena'
+      };
+      document.getElementById('auth-subtitle').textContent = subtitulos[tab] || '';
+    };
+
+    window.olvideClave = async function() {
+      const email = document.getElementById('olvide-email').value.trim();
+      if (!email) { showMsg('msg-olvide', 'Ingresá tu email', 'error'); return; }
+
+      const btn = document.getElementById('btn-olvide');
+      btn.disabled = true; btn.textContent = 'Enviando...';
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://sofacine.vercel.app/auth'
+      });
+
+      if (error) {
+        showMsg('msg-olvide', 'Hubo un error, intentá de nuevo', 'error');
+      } else {
+        showMsg('msg-olvide', 'Te enviamos un email con el link para restablecer tu contrasena. Revisa tu bandeja.', 'success');
+      }
+      btn.disabled = false; btn.textContent = 'Enviar link';
     };
 
     function showMsg(id, text, type) {
