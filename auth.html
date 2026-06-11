@@ -238,10 +238,24 @@
       const btn = document.getElementById('btn-registro');
       btn.disabled = true; btn.textContent = 'Creando cuenta...';
 
+      // Verificar si el username ya existe
+      const { data: existing } = await supabase
+        .from('perfiles').select('username').eq('username', username).single();
+
+      if (existing) {
+        showMsg('msg-registro', 'Ese nombre de usuario ya existe, elegí otro', 'error');
+        btn.disabled = false; btn.textContent = 'Crear cuenta';
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({ email, password: pass });
 
       if (error) {
-        showMsg('msg-registro', error.message, 'error');
+        if (error.message.includes('already registered')) {
+          showMsg('msg-registro', 'Ese email ya tiene una cuenta', 'error');
+        } else {
+          showMsg('msg-registro', error.message, 'error');
+        }
         btn.disabled = false; btn.textContent = 'Crear cuenta';
         return;
       }
