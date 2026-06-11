@@ -139,10 +139,13 @@
     const { data: usuarios } = await supabase
       .from('perfiles').select('*');
 
+    const { data: funcion } = await supabase
+      .from('funciones').select('*').eq('activa', true).single();
+
     const total = reservas?.length || 0;
     const confirmadas = reservas?.filter(r => r.estado === 'confirmado').length || 0;
     const pendientes = reservas?.filter(r => r.estado === 'pendiente_pago').length || 0;
-    const recaudado = confirmadas * 10000;
+    const recaudado = confirmadas * (funcion?.precio || 10000);
 
     document.getElementById('app').innerHTML = `
       <!-- STATS -->
@@ -175,24 +178,24 @@
           <div class="funcion-grid">
             <div class="form-group">
               <label>Pelicula</label>
-              <input type="text" id="f-pelicula" value="Metropolis" />
+              <input type="text" id="f-pelicula" value="${funcion?.pelicula || 'Metropolis'}" />
             </div>
             <div class="form-group">
               <label>Director y año</label>
-              <input type="text" id="f-meta" value="Fritz Lang - 1927 - 153 min" />
+              <input type="text" id="f-meta" value="${funcion?.meta || 'Fritz Lang - 1927 - 153 min'}" />
             </div>
             <div class="form-group">
               <label>Fecha</label>
-              <input type="date" id="f-fecha" value="2025-06-14" />
+              <input type="date" id="f-fecha" value="${funcion?.fecha || '2025-06-14'}" />
             </div>
             <div class="form-group">
               <label>Hora (PY)</label>
-              <input type="time" id="f-hora" value="20:30" />
+              <input type="time" id="f-hora" value="${funcion?.hora?.slice(0,5) || '20:30'}" />
             </div>
           </div>
           <div class="form-group" style="margin-bottom:0">
             <label>Precio (Gs)</label>
-            <input type="number" id="f-precio" value="10000" style="max-width:200px" />
+            <input type="number" id="f-precio" value="${funcion?.precio || 10000}" style="max-width:200px" />
           </div>
         </div>
       </div>
@@ -274,12 +277,24 @@
     mostrarToast(`Link de ${nombre} copiado`);
   };
 
-  window.guardarFuncion = function() {
+  window.guardarFuncion = async function() {
     const btn = document.getElementById('btn-guardar-funcion');
-    btn.textContent = 'Guardado!';
-    btn.disabled = true;
-    mostrarToast('Funcion actualizada');
-    setTimeout(() => { btn.textContent = 'Guardar cambios'; btn.disabled = false; }, 2000);
+    btn.disabled = true; btn.textContent = 'Guardando...';
+
+    const { error } = await supabase.from('funciones').update({
+      pelicula: document.getElementById('f-pelicula').value,
+      meta: document.getElementById('f-meta').value,
+      fecha: document.getElementById('f-fecha').value,
+      hora: document.getElementById('f-hora').value,
+      precio: parseInt(document.getElementById('f-precio').value)
+    }).eq('activa', true);
+
+    if (error) {
+      mostrarToast('Error al guardar');
+    } else {
+      mostrarToast('Funcion actualizada en el sitio');
+    }
+    btn.disabled = false; btn.textContent = 'Guardar cambios';
   };
 
   function mostrarToast(msg) {

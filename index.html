@@ -191,26 +191,26 @@
             <img class="movie-banner-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Metropolis_1927_film_Fritz_Lang.jpg/800px-Metropolis_1927_film_Fritz_Lang.jpg" alt="Metropolis" onerror="this.style.display='none'" />
             <div class="movie-banner-overlay">
               <span class="banner-tag">En cartelera</span>
-              <p class="banner-title">Metropolis</p>
-              <p class="banner-meta">Fritz Lang - 1927 - 153 min</p>
+              <p class="banner-title" id="banner-title">Metropolis</p>
+              <p class="banner-meta" id="banner-meta">Fritz Lang - 1927 - 153 min</p>
             </div>
           </div>
 
           <div class="ticket-card">
             <div class="ticket-header">
               <p class="ticket-label">Tu entrada</p>
-              <p class="movie-title-card">Metropolis</p>
-              <p class="movie-year">Fritz Lang - 1927 - 153 min</p>
+              <p class="movie-title-card" id="movie-title-card">Metropolis</p>
+              <p class="movie-year" id="movie-year-card">Fritz Lang - 1927 - 153 min</p>
             </div>
             <div class="ticket-perforated"><div class="ticket-dash"></div></div>
             <div class="ticket-body">
               <div class="ticket-row">
                 <span class="ticket-row-label">Fecha</span>
-                <span class="ticket-row-value">Sabado 14 de junio</span>
+                <span class="ticket-row-value" id="fecha-display">Sabado 14 de junio</span>
               </div>
               <div class="ticket-row">
                 <span class="ticket-row-label">Hora</span>
-                <span class="ticket-row-value">20:30 hs (PY)</span>
+                <span class="ticket-row-value" id="hora-display">20:30 hs (PY)</span>
               </div>
               <div class="ticket-row">
                 <span class="ticket-row-label">Sala</span>
@@ -227,7 +227,7 @@
               </div>
               <div class="price-row">
                 <span class="price-label">Entrada</span>
-                <span class="price-value"><span class="price-currency">G </span>10.000</span>
+                <span class="price-value"><span class="price-currency">G </span><span id="precio-display">10.000</span></span>
               </div>
               <div id="form-wrap">
                 <div class="form-group">
@@ -281,47 +281,74 @@
   </div>
 
   <script>
-    // Verificar sesion
     (async () => {
       const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
       const sb = createClient('https://wkuhwajoebdfntcokilx.supabase.co','sb_publishable_3G7eC0rb4fcGHQKzq6qidQ_54IkDdtM');
+
+      // Verificar sesion
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { window.location.href = '/auth'; return; }
+
+      // Mostrar usuario en nav
       const { data: p } = await sb.from('perfiles').select('username').eq('id', session.user.id).single();
       const navRight = document.getElementById('nav-right');
       if (navRight) navRight.innerHTML =
         `<a href="/perfil" style="color:var(--gold);font-size:0.875rem;text-decoration:none;">${p?.username || session.user.email}</a>
          <span style="color:var(--text-muted);font-size:0.875rem;cursor:pointer;" onclick="salir()">Salir</span>`;
       window._sb = sb;
+
+      // Cargar funcion activa desde Supabase
+      const { data: funcion } = await sb.from('funciones').select('*').eq('activa', true).single();
+      if (funcion) {
+        // Actualizar textos
+        document.getElementById('movie-title-card').textContent = funcion.pelicula;
+        document.getElementById('movie-year-card').textContent = funcion.meta;
+        document.getElementById('banner-title').textContent = funcion.pelicula;
+        document.getElementById('banner-meta').textContent = funcion.meta;
+
+        // Fecha formateada
+        const fecha = new Date(funcion.fecha + 'T00:00:00');
+        const fechaStr = fecha.toLocaleDateString('es-PY', { weekday: 'long', day: 'numeric', month: 'long' });
+        document.getElementById('fecha-display').textContent = fechaStr.charAt(0).toUpperCase() + fechaStr.slice(1);
+        document.getElementById('hora-display').textContent = funcion.hora.slice(0,5) + ' hs (PY)';
+        document.getElementById('precio-display').textContent = funcion.precio.toLocaleString();
+
+        // Countdown
+        const funcionFecha = new Date(`${funcion.fecha}T${funcion.hora}-04:00`);
+        function updateCountdown() {
+          const diff = funcionFecha - new Date();
+          if (diff <= 0) { document.getElementById('countdown-wrap').style.display='none'; return; }
+          const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000),
+                m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
+          document.getElementById('cd-d').textContent=String(d).padStart(2,'0');
+          document.getElementById('cd-h').textContent=String(h).padStart(2,'0');
+          document.getElementById('cd-m').textContent=String(m).padStart(2,'0');
+          document.getElementById('cd-s').textContent=String(s).padStart(2,'0');
+        }
+        updateCountdown(); setInterval(updateCountdown, 1000);
+
+        // Aforo real
+        const { count } = await sb.from('reservas').select('*', { count: 'exact', head: true }).eq('pelicula', funcion.pelicula);
+        const total = 100;
+        let reservas = count || 0;
+        function updateAforo() {
+          document.getElementById('aforo-num').textContent=(total-reservas)+' restantes';
+          document.getElementById('aforo-fill').style.width=(reservas/total*100)+'%';
+        }
+        updateAforo();
+
+        // Guardar funcion para el form
+        window._funcion = funcion;
+        window._reservas = reservas;
+        window._total = total;
+        window._sb = sb;
+      }
     })();
 
     async function salir() {
       if (window._sb) await window._sb.auth.signOut();
       window.location.href = '/auth';
     }
-
-    const SUPABASE_URL = 'https://wkuhwajoebdfntcokilx.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_3G7eC0rb4fcGHQKzq6qidQ_54IkDdtM';
-    const funcionFecha = new Date('2025-06-14T20:30:00-04:00');
-
-    function updateCountdown() {
-      const diff = funcionFecha - new Date();
-      if (diff <= 0) { document.getElementById('countdown-wrap').style.display='none'; return; }
-      const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000),
-            m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
-      document.getElementById('cd-d').textContent=String(d).padStart(2,'0');
-      document.getElementById('cd-h').textContent=String(h).padStart(2,'0');
-      document.getElementById('cd-m').textContent=String(m).padStart(2,'0');
-      document.getElementById('cd-s').textContent=String(s).padStart(2,'0');
-    }
-    updateCountdown(); setInterval(updateCountdown, 1000);
-
-    let reservas=34; const total=100;
-    function updateAforo() {
-      document.getElementById('aforo-num').textContent=(total-reservas)+' restantes';
-      document.getElementById('aforo-fill').style.width=(reservas/total*100)+'%';
-    }
-    updateAforo();
 
     async function reservar() {
       const nombre=document.getElementById('nombre').value.trim();
@@ -332,16 +359,23 @@
       if(!nombre){document.getElementById('err-nombre').classList.add('visible');ok=false;}
       if(!email||!email.includes('@')){document.getElementById('err-email').classList.add('visible');ok=false;}
       if(!ok) return;
+
       const btn=document.getElementById('btn-reservar');
       btn.disabled=true; btn.textContent='Guardando...';
+
+      const f = window._funcion;
       try {
-        await fetch(`${SUPABASE_URL}/rest/v1/reservas`,{
-          method:'POST',
-          headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},
-          body:JSON.stringify({nombre,email,pelicula:'Metropolis',fecha_funcion:'2025-06-14',estado:'pendiente_pago'})
+        await window._sb.from('reservas').insert({
+          nombre, email,
+          pelicula: f?.pelicula || 'Metropolis',
+          fecha_funcion: f?.fecha || '2025-06-14',
+          estado: 'pendiente_pago'
         });
       } catch(e){}
-      reservas++; updateAforo();
+
+      window._reservas = (window._reservas || 0) + 1;
+      document.getElementById('aforo-num').textContent=(window._total - window._reservas)+' restantes';
+      document.getElementById('aforo-fill').style.width=(window._reservas/window._total*100)+'%';
       document.getElementById('form-wrap').style.display='none';
       document.getElementById('success-msg').classList.add('visible');
       document.getElementById('pago-info').classList.add('visible');
