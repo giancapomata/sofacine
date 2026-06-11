@@ -298,7 +298,7 @@
       window._sb = sb;
 
       // Cargar funcion activa desde Supabase
-      const { data: funcion } = await sb.from('funciones').select('*').eq('activa', true).single();
+      const { data: funcion } = await sb.from('funciones').select('*').limit(1).order('id', { ascending: false }).single();
       if (funcion) {
         // Actualizar textos
         document.getElementById('movie-title-card').textContent = funcion.pelicula;

@@ -140,7 +140,7 @@
       .from('perfiles').select('*');
 
     const { data: funcion } = await supabase
-      .from('funciones').select('*').eq('activa', true).single();
+      .from('funciones').select('*').limit(1).order('id', { ascending: false }).single();
 
     const total = reservas?.length || 0;
     const confirmadas = reservas?.filter(r => r.estado === 'confirmado').length || 0;
@@ -287,7 +287,7 @@
       fecha: document.getElementById('f-fecha').value,
       hora: document.getElementById('f-hora').value,
       precio: parseInt(document.getElementById('f-precio').value)
-    }).eq('activa', true);
+    }).eq('id', 1);
 
     if (error) {
       mostrarToast('Error al guardar');
