@@ -3,6 +3,7 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/auth", "destination": "/auth.html" },
-    { "source": "/perfil", "destination": "/perfil.html" }
+    { "source": "/perfil", "destination": "/perfil.html" },
+    { "source": "/admin", "destination": "/admin.html" }
   ]
 }

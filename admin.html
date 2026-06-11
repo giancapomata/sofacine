@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sofacine — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080709; --bg2: #111019; --bg3: #191821;
+      --gold: #e8b86d; --gold-dim: #9a7438;
+      --text: #f0eee8; --text-muted: #7a7880; --text-dim: #3a3840;
+      --border: rgba(255,255,255,0.06); --border-gold: rgba(232,184,109,0.2);
+      --green: #3a8a5c; --green-bg: rgba(58,138,92,0.08);
+      --red: #e07070; --red-bg: rgba(224,112,112,0.08);
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 300; line-height: 1.6; min-height: 100vh; }
+
+    body::before {
+      content: ''; position: fixed; inset: -50%; width: 200%; height: 200%;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: 0.4;
+    }
+
+    .content { position: relative; z-index: 1; }
+
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.5rem 2.5rem; border-bottom: 1px solid var(--border);
+    }
+    .logo { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--gold); letter-spacing: -0.02em; text-decoration: none; }
+    .logo span { font-style: italic; color: var(--text); }
+    .nav-badge { font-size: 0.7rem; font-weight: 500; background: var(--gold); color: #080709; padding: 0.2rem 0.6rem; border-radius: 999px; margin-left: 0.5rem; vertical-align: middle; }
+    .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+    .nav-link { color: var(--text-muted); text-decoration: none; font-size: 0.875rem; cursor: pointer; transition: color 0.2s; }
+    .nav-link:hover { color: var(--text); }
+
+    .admin-wrap { max-width: 1000px; margin: 0 auto; padding: 2.5rem; }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2.5rem; }
+    .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+    .stat-card.highlight { border-color: var(--border-gold); }
+    .stat-label { font-size: 0.7rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+    .stat-num { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--text); line-height: 1; }
+    .stat-num.gold { color: var(--gold); }
+
+    /* SECCION */
+    .section { margin-bottom: 2.5rem; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; padding-bottom: 0.875rem; border-bottom: 1px solid var(--border); }
+    .section-title { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text); }
+
+    /* FUNCION ACTUAL */
+    .funcion-card { background: var(--bg2); border: 1px solid var(--border-gold); border-radius: 12px; padding: 1.5rem; }
+    .funcion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+    .form-group { }
+    .form-group label { display: block; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.4rem; letter-spacing: 0.05em; text-transform: uppercase; }
+    .form-group input { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 0.875rem; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 300; outline: none; transition: border-color 0.2s; }
+    .form-group input:focus { border-color: var(--gold-dim); }
+    .btn-gold { background: var(--gold); color: #080709; border: none; border-radius: 8px; padding: 0.75rem 1.5rem; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+    .btn-gold:hover { background: #f0c97a; }
+    .btn-gold:disabled { background: var(--gold-dim); cursor: not-allowed; }
+
+    /* TABLA RESERVAS */
+    .tabla-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .tabla { width: 100%; border-collapse: collapse; }
+    .tabla th { padding: 0.75rem 1rem; text-align: left; font-size: 0.7rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); background: var(--bg3); }
+    .tabla td { padding: 0.875rem 1rem; font-size: 0.85rem; color: var(--text); border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .tabla tr:last-child td { border-bottom: none; }
+    .tabla tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .badge { display: inline-block; font-size: 0.7rem; font-weight: 500; padding: 0.2rem 0.65rem; border-radius: 999px; }
+    .badge-pending { background: rgba(232,184,109,0.1); color: var(--gold); border: 1px solid var(--border-gold); }
+    .badge-confirmed { background: var(--green-bg); color: #6abf8a; border: 1px solid rgba(58,138,92,0.2); }
+
+    .btn-confirm { background: var(--green-bg); color: #6abf8a; border: 1px solid rgba(58,138,92,0.2); border-radius: 6px; padding: 0.3rem 0.75rem; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
+    .btn-confirm:hover { background: rgba(58,138,92,0.15); }
+
+    .token-box { font-size: 0.72rem; color: var(--text-muted); word-break: break-all; max-width: 200px; }
+    .token-link { color: var(--gold); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; font-size: 0.75rem; }
+
+    .empty-state { padding: 3rem; text-align: center; }
+    .empty-state p { font-size: 0.85rem; color: var(--text-dim); }
+
+    .loading { padding: 2rem; text-align: center; font-size: 0.85rem; color: var(--text-muted); }
+
+    .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--bg3); border: 1px solid var(--border-gold); border-radius: 10px; padding: 0.875rem 1.25rem; font-size: 0.85rem; color: var(--text); z-index: 999; transform: translateY(100px); opacity: 0; transition: all 0.3s; }
+    .toast.visible { transform: translateY(0); opacity: 1; }
+
+    @media (max-width: 700px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .funcion-grid { grid-template-columns: 1fr; }
+      .admin-wrap { padding: 1.5rem; }
+      nav { padding: 1.25rem 1.5rem; }
+      .tabla th:nth-child(3), .tabla td:nth-child(3) { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="content">
+  <nav>
+    <a href="/" class="logo">sofa<span>cine</span><span class="nav-badge">Admin</span></a>
+    <div class="nav-right">
+      <a href="/" class="nav-link">Ver sitio</a>
+      <span class="nav-link" onclick="cerrarSesion()">Salir</span>
+    </div>
+  </nav>
+
+  <div class="admin-wrap" id="app">
+    <div class="loading">Cargando panel...</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+  const ADMIN_EMAIL = 'giancapomata@gmail.com';
+  const supabase = createClient(
+    'https://wkuhwajoebdfntcokilx.supabase.co',
+    'sb_publishable_3G7eC0rb4fcGHQKzq6qidQ_54IkDdtM'
+  );
+
+  // Verificar sesion y que sea admin
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { window.location.href = '/auth'; }
+  else if (session.user.email !== ADMIN_EMAIL) { window.location.href = '/'; }
+  else { await cargarPanel(); }
+
+  async function cargarPanel() {
+    const { data: reservas } = await supabase
+      .from('reservas').select('*').order('created_at', { ascending: false });
+
+    const { data: usuarios } = await supabase
+      .from('perfiles').select('*');
+
+    const total = reservas?.length || 0;
+    const confirmadas = reservas?.filter(r => r.estado === 'confirmado').length || 0;
+    const pendientes = reservas?.filter(r => r.estado === 'pendiente_pago').length || 0;
+    const recaudado = confirmadas * 10000;
+
+    document.getElementById('app').innerHTML = `
+      <!-- STATS -->
+      <div class="stats-grid">
+        <div class="stat-card highlight">
+          <p class="stat-label">Recaudado</p>
+          <p class="stat-num gold">G ${recaudado.toLocaleString()}</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">Reservas totales</p>
+          <p class="stat-num">${total}</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">Confirmadas</p>
+          <p class="stat-num">${confirmadas}</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">Usuarios</p>
+          <p class="stat-num">${usuarios?.length || 0}</p>
+        </div>
+      </div>
+
+      <!-- FUNCION ACTUAL -->
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Funcion programada</h2>
+          <button class="btn-gold" id="btn-guardar-funcion" onclick="guardarFuncion()">Guardar cambios</button>
+        </div>
+        <div class="funcion-card">
+          <div class="funcion-grid">
+            <div class="form-group">
+              <label>Pelicula</label>
+              <input type="text" id="f-pelicula" value="Metropolis" />
+            </div>
+            <div class="form-group">
+              <label>Director y año</label>
+              <input type="text" id="f-meta" value="Fritz Lang - 1927 - 153 min" />
+            </div>
+            <div class="form-group">
+              <label>Fecha</label>
+              <input type="date" id="f-fecha" value="2025-06-14" />
+            </div>
+            <div class="form-group">
+              <label>Hora (PY)</label>
+              <input type="time" id="f-hora" value="20:30" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Precio (Gs)</label>
+            <input type="number" id="f-precio" value="10000" style="max-width:200px" />
+          </div>
+        </div>
+      </div>
+
+      <!-- RESERVAS -->
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Reservas</h2>
+          <span style="font-size:0.78rem;color:var(--text-muted)">${pendientes} pendientes de pago</span>
+        </div>
+        <div class="tabla-wrap">
+          ${!reservas || reservas.length === 0
+            ? `<div class="empty-state"><p>No hay reservas todavia.</p></div>`
+            : `<table class="tabla">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Pelicula</th>
+                    <th>Estado</th>
+                    <th>Acceso</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${reservas.map(r => `
+                    <tr id="row-${r.id}">
+                      <td>${r.nombre}</td>
+                      <td style="color:var(--text-muted)">${r.email}</td>
+                      <td style="color:var(--text-muted)">${r.pelicula}</td>
+                      <td>
+                        <span class="badge ${r.estado === 'confirmado' ? 'badge-confirmed' : 'badge-pending'}">
+                          ${r.estado === 'confirmado' ? 'Confirmado' : 'Pendiente'}
+                        </span>
+                      </td>
+                      <td>
+                        ${r.token
+                          ? `<span class="token-link" onclick="copiarToken('${r.token}', '${r.nombre}')">Copiar link</span>`
+                          : `<span style="color:var(--text-dim);font-size:0.78rem;">Sin token</span>`}
+                      </td>
+                      <td>
+                        ${r.estado !== 'confirmado'
+                          ? `<button class="btn-confirm" onclick="confirmarReserva(${r.id}, '${r.email}', '${r.nombre}')">Confirmar pago</button>`
+                          : ''}
+                      </td>
+                    </tr>`).join('')}
+                </tbody>
+              </table>`}
+        </div>
+      </div>`;
+  }
+
+  // Confirmar pago y generar token
+  window.confirmarReserva = async function(id, email, nombre) {
+    const token = crypto.randomUUID();
+    const { error } = await supabase
+      .from('reservas')
+      .update({ estado: 'confirmado', token })
+      .eq('id', id);
+
+    if (error) { mostrarToast('Error al confirmar'); return; }
+
+    // Actualizar fila en pantalla
+    const row = document.getElementById(`row-${id}`);
+    if (row) {
+      row.querySelector('.badge').className = 'badge badge-confirmed';
+      row.querySelector('.badge').textContent = 'Confirmado';
+      row.querySelector('td:nth-child(5)').innerHTML = `<span class="token-link" onclick="copiarToken('${token}', '${nombre}')">Copiar link</span>`;
+      row.querySelector('td:last-child').innerHTML = '';
+    }
+
+    mostrarToast(`Pago confirmado para ${nombre}`);
+  };
+
+  // Copiar link de acceso al portapapeles
+  window.copiarToken = function(token, nombre) {
+    const link = `https://sofacine.vercel.app/sala?token=${token}`;
+    navigator.clipboard.writeText(link);
+    mostrarToast(`Link de ${nombre} copiado`);
+  };
+
+  window.guardarFuncion = function() {
+    const btn = document.getElementById('btn-guardar-funcion');
+    btn.textContent = 'Guardado!';
+    btn.disabled = true;
+    mostrarToast('Funcion actualizada');
+    setTimeout(() => { btn.textContent = 'Guardar cambios'; btn.disabled = false; }, 2000);
+  };
+
+  function mostrarToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    setTimeout(() => t.classList.remove('visible'), 3000);
+  }
+
+  window.cerrarSesion = async function() {
+    await supabase.auth.signOut();
+    window.location.href = '/auth';
+  };
+</script>
+</body>
+</html>
