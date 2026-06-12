@@ -323,8 +323,14 @@
         });
       }
 
-      showMsg('msg-registro', 'Cuenta creada! Revisa tu email para confirmar.', 'success');
-      btn.disabled = false; btn.textContent = 'Crear cuenta';
+      // Si hay sesion activa (confirmacion de email desactivada), entrar directo
+      if (data.session) {
+        showMsg('msg-registro', 'Cuenta creada! Redirigiendo...', 'success');
+        setTimeout(() => window.location.href = '/', 800);
+      } else {
+        showMsg('msg-registro', 'Cuenta creada! Revisa tu email para confirmar.', 'success');
+        btn.disabled = false; btn.textContent = 'Crear cuenta';
+      }
     };
 
     window.guardarNuevaClave = async function() {
