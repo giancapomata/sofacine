@@ -181,6 +181,17 @@
           <div class="msg" id="msg-olvide"></div>
         </div>
 
+        <!-- NUEVA CONTRASEÑA (despues de click en email de recuperacion) -->
+        <div class="form-panel" id="panel-nueva-clave">
+          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.25rem;line-height:1.6;">Elegi tu nueva contrasena.</p>
+          <div class="form-group">
+            <label for="nueva-pass">Nueva contrasena</label>
+            <input type="password" id="nueva-pass" placeholder="minimo 6 caracteres" autocomplete="new-password" />
+          </div>
+          <button class="btn-primary" id="btn-nueva-clave" onclick="guardarNuevaClave()">Guardar contrasena</button>
+          <div class="msg" id="msg-nueva-clave"></div>
+        </div>
+
         <!-- REGISTRO -->
         <div class="form-panel" id="panel-registro">
           <div class="form-group">
@@ -316,9 +327,46 @@
       btn.disabled = false; btn.textContent = 'Crear cuenta';
     };
 
-    // Si ya esta logueado, redirigir al index
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) window.location.href = '/';
+    window.guardarNuevaClave = async function() {
+      const pass = document.getElementById('nueva-pass').value;
+      if (!pass || pass.length < 6) {
+        showMsg('msg-nueva-clave', 'La contrasena debe tener al menos 6 caracteres', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-nueva-clave');
+      btn.disabled = true; btn.textContent = 'Guardando...';
+
+      const { error } = await supabase.auth.updateUser({ password: pass });
+
+      if (error) {
+        showMsg('msg-nueva-clave', 'Hubo un error, intentá de nuevo', 'error');
+        btn.disabled = false; btn.textContent = 'Guardar contrasena';
+      } else {
+        showMsg('msg-nueva-clave', 'Contrasena actualizada! Redirigiendo...', 'success');
+        setTimeout(() => window.location.href = '/', 1200);
+      }
+    };
+
+    // Detectar si venimos de un link de recuperacion de contrasena
+    let esRecovery = false;
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        esRecovery = true;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('panel-nueva-clave').classList.add('active');
+        document.querySelector('.tabs').style.display = 'none';
+        document.getElementById('auth-subtitle').textContent = 'Recupera tu contrasena';
+      }
+    });
+
+    // Si ya esta logueado (login normal, no recovery), redirigir al index
+    setTimeout(async () => {
+      if (esRecovery) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) window.location.href = '/';
+    }, 300);
   </script>
 </body>
 </html>
