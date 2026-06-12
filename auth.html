@@ -376,7 +376,13 @@
     // Si ya esta logueado (login normal, no recovery), redirigir al index
     if (!esRecovery) {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) window.location.href = '/';
+      if (session) { window.location.href = '/'; }
+      else {
+        // Abrir directo en la pestaña indicada por ?tab=registro o ?tab=login
+        const params = new URLSearchParams(window.location.search);
+        const tab = params.get('tab');
+        if (tab === 'registro' || tab === 'login') switchTab(tab);
+      }
     }
   </script>
 </body>
