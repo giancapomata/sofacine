@@ -296,9 +296,10 @@
           `<a href="/perfil" style="color:var(--gold);font-size:0.875rem;text-decoration:none;">${p?.username || session.user.email}</a>
            <span style="color:var(--text-muted);font-size:0.875rem;cursor:pointer;" onclick="salir()">Salir</span>`;
       } else {
-        // Visitante: mostrar Ingresar / Crear cuenta
+        // Visitante: mostrar Ingresar y Crear cuenta
         if (navRight) navRight.innerHTML =
-          `<a href="/auth" style="color:var(--gold);font-size:0.875rem;text-decoration:none;font-weight:500;">Ingresar</a>`;
+          `<a href="/auth" style="color:var(--text-muted);font-size:0.875rem;text-decoration:none;">Ingresar</a>
+           <a href="/auth" style="color:var(--gold);font-size:0.875rem;text-decoration:none;font-weight:500;border:1px solid var(--border-gold);padding:0.4rem 1rem;border-radius:999px;">Crear cuenta</a>`;
       }
       window._sb = sb;
 
