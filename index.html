@@ -285,16 +285,21 @@
       const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
       const sb = createClient('https://wkuhwajoebdfntcokilx.supabase.co','sb_publishable_3G7eC0rb4fcGHQKzq6qidQ_54IkDdtM');
 
-      // Verificar sesion
+      // Verificar sesion (sin forzar redireccion)
       const { data: { session } } = await sb.auth.getSession();
-      if (!session) { window.location.href = '/auth'; return; }
-
-      // Mostrar usuario en nav
-      const { data: p } = await sb.from('perfiles').select('username').eq('id', session.user.id).single();
       const navRight = document.getElementById('nav-right');
-      if (navRight) navRight.innerHTML =
-        `<a href="/perfil" style="color:var(--gold);font-size:0.875rem;text-decoration:none;">${p?.username || session.user.email}</a>
-         <span style="color:var(--text-muted);font-size:0.875rem;cursor:pointer;" onclick="salir()">Salir</span>`;
+
+      if (session) {
+        // Usuario logueado: mostrar perfil y salir
+        const { data: p } = await sb.from('perfiles').select('username').eq('id', session.user.id).single();
+        if (navRight) navRight.innerHTML =
+          `<a href="/perfil" style="color:var(--gold);font-size:0.875rem;text-decoration:none;">${p?.username || session.user.email}</a>
+           <span style="color:var(--text-muted);font-size:0.875rem;cursor:pointer;" onclick="salir()">Salir</span>`;
+      } else {
+        // Visitante: mostrar Ingresar / Crear cuenta
+        if (navRight) navRight.innerHTML =
+          `<a href="/auth" style="color:var(--gold);font-size:0.875rem;text-decoration:none;font-weight:500;">Ingresar</a>`;
+      }
       window._sb = sb;
 
       // Cargar funcion activa desde Supabase
