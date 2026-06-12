@@ -349,24 +349,35 @@
     };
 
     // Detectar si venimos de un link de recuperacion de contrasena
-    let esRecovery = false;
+    // Supabase pone type=recovery en el hash o en la query de la URL
+    const urlHash = window.location.hash || '';
+    const urlSearch = window.location.search || '';
+    const esRecovery = urlHash.includes('type=recovery') || urlSearch.includes('type=recovery');
+
+    function mostrarPanelRecovery() {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-nueva-clave').classList.add('active');
+      document.querySelector('.tabs').style.display = 'none';
+      document.getElementById('auth-subtitle').textContent = 'Recupera tu contrasena';
+    }
+
+    if (esRecovery) {
+      mostrarPanelRecovery();
+    }
+
+    // Tambien escuchar el evento por si la deteccion tarda
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
-        esRecovery = true;
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
-        document.getElementById('panel-nueva-clave').classList.add('active');
-        document.querySelector('.tabs').style.display = 'none';
-        document.getElementById('auth-subtitle').textContent = 'Recupera tu contrasena';
+        mostrarPanelRecovery();
       }
     });
 
     // Si ya esta logueado (login normal, no recovery), redirigir al index
-    setTimeout(async () => {
-      if (esRecovery) return;
+    if (!esRecovery) {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) window.location.href = '/';
-    }, 300);
+    }
   </script>
 </body>
 </html>
