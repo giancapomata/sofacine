@@ -452,6 +452,20 @@
         const fechaStr = fecha.toLocaleDateString('es-PY', { weekday: 'long', day: 'numeric', month: 'long' });
         sidebarMeta.textContent = `${funcion.meta} · ${fechaStr} · ${funcion.hora.slice(0,5)} hs`;
       }
+
+      // Verificar si ya reservó
+      const { data: yaReservo } = await supabase.from('reservas')
+        .select('id').eq('email', currentUser.email).eq('pelicula', funcion.pelicula).single();
+      const btnReserva = document.getElementById('btn-reservar-sidebar');
+      if (btnReserva) {
+        if (yaReservo) {
+          btnReserva.textContent = 'Ya tenés tu entrada ✓';
+          btnReserva.style.opacity = '0.6';
+          btnReserva.style.pointerEvents = 'none';
+        } else {
+          btnReserva.href = '/';
+        }
+      }
     }
   }
 
@@ -547,7 +561,7 @@
             <p class="sidebar-title">Proxima funcion</p>
             <p class="proxima-titulo" id="sidebar-pelicula">Cargando...</p>
             <p class="proxima-meta" id="sidebar-meta"></p>
-            <a href="/" class="btn-secondary">Reservar entrada</a>
+            <a href="/" id="btn-reservar-sidebar" class="btn-secondary">Reservar entrada</a>
           </div>
 
           <div class="sidebar-card">

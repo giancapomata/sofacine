@@ -354,6 +354,17 @@
         }
         updateAforo();
 
+        // Verificar si el usuario ya reservó esta función
+        if (session) {
+          const { data: yaReservo } = await sb.from('reservas')
+            .select('id').eq('email', session.user.email).eq('pelicula', funcion.pelicula).single();
+          if (yaReservo) {
+            document.getElementById('form-wrap').style.display = 'none';
+            document.getElementById('success-msg').classList.add('visible');
+            document.getElementById('pago-info').classList.add('visible');
+          }
+        }
+
         // Guardar funcion para el form
         window._funcion = funcion;
         window._reservas = reservas;
