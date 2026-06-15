@@ -362,13 +362,28 @@
       <input type="text" id="edit-username" placeholder="tu_usuario" />
     </div>
     <div class="form-group">
+      <label>Celular (WhatsApp)</label>
+      <input type="tel" id="edit-celular" placeholder="ej: 0981 123 456" />
+    </div>
+    <div class="form-group">
       <label>Bio</label>
       <textarea id="edit-bio" rows="3" placeholder="Cinefilo de corazon..."></textarea>
+    </div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:1rem 0;" />
+    <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.75rem;">Cambiar email o contraseña (opcional)</p>
+    <div class="form-group">
+      <label>Nuevo email</label>
+      <input type="email" id="edit-email" placeholder="nuevo@email.com" />
+    </div>
+    <div class="form-group">
+      <label>Nueva contraseña</label>
+      <input type="password" id="edit-pass" placeholder="minimo 6 caracteres" />
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="cerrarModal('modal-perfil')">Cancelar</button>
       <button class="btn-save" id="btn-save-perfil" onclick="guardarPerfil()">Guardar</button>
     </div>
+    <div class="msg" id="msg-edit-perfil" style="margin-top:0.75rem;font-size:0.82rem;"></div>
   </div>
 </div>
 
@@ -411,6 +426,16 @@
     const { data: p } = await supabase
       .from('perfiles').select('*').eq('id', currentUser.id).single();
     perfil = p;
+
+    // Cargar proxima funcion desde Supabase
+    const { data: funcion } = await supabase
+      .from('funciones').select('*').limit(1).order('id', { ascending: false }).single();
+    if (funcion) {
+      document.getElementById('sidebar-pelicula').textContent = funcion.pelicula;
+      const fecha = new Date(funcion.fecha + 'T00:00:00');
+      const fechaStr = fecha.toLocaleDateString('es-PY', { weekday: 'long', day: 'numeric', month: 'long' });
+      document.getElementById('sidebar-meta').textContent = `${funcion.meta} · ${fechaStr} · ${funcion.hora.slice(0,5)} hs`;
+    }
 
     // Cargar top5
     const { data: t } = await supabase
@@ -516,9 +541,9 @@
         <div class="sidebar">
           <div class="sidebar-card proxima-funcion">
             <p class="sidebar-title">Proxima funcion</p>
-            <p class="proxima-titulo">Metropolis</p>
-            <p class="proxima-meta">Fritz Lang · Sabado 14 de junio · 20:30 hs</p>
-            <a href="/index.html" class="btn-secondary">Reservar entrada</a>
+            <p class="proxima-titulo" id="sidebar-pelicula">Cargando...</p>
+            <p class="proxima-meta" id="sidebar-meta"></p>
+            <a href="/" class="btn-secondary">Reservar entrada</a>
           </div>
 
           <div class="sidebar-card">
@@ -540,27 +565,69 @@
   // MODAL PERFIL
   window.abrirModalPerfil = function() {
     document.getElementById('edit-username').value = perfil?.username || '';
+    document.getElementById('edit-celular').value = perfil?.celular || '';
     document.getElementById('edit-bio').value = perfil?.bio || '';
+    document.getElementById('edit-email').value = '';
+    document.getElementById('edit-pass').value = '';
+    document.getElementById('msg-edit-perfil').textContent = '';
     abrirModal('modal-perfil');
   };
 
   window.guardarPerfil = async function() {
     const username = document.getElementById('edit-username').value.trim();
-    const bio = document.getElementById('edit-bio').value.trim();
-    if (!username) return;
+    const celular  = document.getElementById('edit-celular').value.trim();
+    const bio      = document.getElementById('edit-bio').value.trim();
+    const email    = document.getElementById('edit-email').value.trim();
+    const pass     = document.getElementById('edit-pass').value;
+    const msgEl    = document.getElementById('msg-edit-perfil');
+
+    if (!username) { msgEl.style.color = '#e07070'; msgEl.textContent = 'El usuario no puede estar vacío'; return; }
 
     const btn = document.getElementById('btn-save-perfil');
     btn.disabled = true; btn.textContent = 'Guardando...';
 
+    // Actualizar perfil en tabla perfiles
     await supabase.from('perfiles').upsert({
-      id: currentUser.id, username, bio, avatar_url: perfil?.avatar_url || ''
+      id: currentUser.id, username, celular, bio, avatar_url: perfil?.avatar_url || ''
     });
 
-    perfil = { ...perfil, username, bio };
+    // Actualizar email si se completó
+    if (email) {
+      const { error } = await supabase.auth.updateUser({ email });
+      if (error) {
+        msgEl.style.color = '#e07070';
+        msgEl.textContent = 'Error al cambiar email: ' + error.message;
+        btn.disabled = false; btn.textContent = 'Guardar';
+        return;
+      }
+    }
+
+    // Actualizar contraseña si se completó
+    if (pass) {
+      if (pass.length < 6) {
+        msgEl.style.color = '#e07070';
+        msgEl.textContent = 'La contraseña debe tener al menos 6 caracteres';
+        btn.disabled = false; btn.textContent = 'Guardar';
+        return;
+      }
+      const { error } = await supabase.auth.updateUser({ password: pass });
+      if (error) {
+        msgEl.style.color = '#e07070';
+        msgEl.textContent = 'Error al cambiar contraseña: ' + error.message;
+        btn.disabled = false; btn.textContent = 'Guardar';
+        return;
+      }
+    }
+
+    perfil = { ...perfil, username, celular, bio };
     document.getElementById('nav-username').textContent = username;
-    cerrarModal('modal-perfil');
-    renderPerfil();
     btn.disabled = false; btn.textContent = 'Guardar';
+    msgEl.style.color = '#6abf8a';
+    msgEl.textContent = 'Cambios guardados!';
+    setTimeout(() => {
+      cerrarModal('modal-perfil');
+      cargarPerfil();
+    }, 800);
   };
 
   // MODAL TOP 5
