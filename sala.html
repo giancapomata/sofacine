@@ -327,8 +327,12 @@
     // ── INICIAR SALA ──
     function iniciarSala() {
       const ahora = new Date();
-      const fechaFuncion = new Date(`${funcion.fecha}T${funcion.hora}-04:00`);
-      const duracionMs = 94 * 60 * 1000; // ~94 min Nosferatu
+      
+      // Construir fecha usando hora local sin conversión de zona horaria
+      const fechaStr = `${funcion.fecha}T${funcion.hora}`;
+      const fechaFuncion = new Date(fechaStr);
+
+      const duracionMs = 94 * 60 * 1000;
       const finFuncion = new Date(fechaFuncion.getTime() + duracionMs);
 
       if (ahora < fechaFuncion) {
