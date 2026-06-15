@@ -297,8 +297,10 @@
       if (!token) { mostrarDenegado(); }
       else {
         // Verificar token en reservas
-        const { data: r } = await sb.from('reservas')
-          .select('*').eq('token', token).eq('estado', 'confirmado').single();
+        const { data: reservas } = await sb.from('reservas')
+          .select('*').eq('token', token);
+
+        const r = reservas?.find(r => r.estado === 'confirmado');
 
         if (!r) { mostrarDenegado(); }
         else {
