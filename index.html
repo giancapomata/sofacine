@@ -396,9 +396,24 @@
       }
 
       const btn = document.getElementById('btn-reservar');
-      btn.disabled = true; btn.textContent = 'Guardando...';
+      btn.disabled = true; btn.textContent = 'Verificando...';
 
       const f = window._funcion;
+
+      // Verificar si ya existe una reserva para este email y película
+      const { data: yaReservo } = await window._sb.from('reservas')
+        .select('id').eq('email', email).eq('pelicula', f?.pelicula || 'Metropolis').single();
+
+      if (yaReservo) {
+        btn.disabled = false; btn.textContent = 'Reservar mi entrada';
+        document.getElementById('form-wrap').style.display = 'none';
+        document.getElementById('success-msg').classList.add('visible');
+        document.getElementById('pago-info').classList.add('visible');
+        return;
+      }
+
+      btn.textContent = 'Guardando...';
+
       try {
         await window._sb.from('reservas').insert({
           nombre, email,
