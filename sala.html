@@ -202,8 +202,11 @@
 
     <!-- FUNCION - VIDEO -->
     <div id="funcion">
+      <div style="background:rgba(232,184,109,0.08);border-bottom:1px solid var(--border-gold);padding:0.75rem 2rem;text-align:center;">
+        <p style="font-size:0.78rem;color:var(--gold);">🎬 Como en el cine — no hay pausa. Silenciá tu celular y andá al baño antes. La función no te espera.</p>
+      </div>
       <div class="video-wrap">
-        <video id="video-player" controls>
+        <video id="video-player" controlsList="nodownload nofullscreen" disablePictureInPicture oncontextmenu="return false;">
           <source id="video-src" src="" type="video/mp4" />
         </video>
       </div>
@@ -503,7 +506,6 @@
       wrap.scrollTop = wrap.scrollHeight;
     }
 
-    // ── FUNCION ──
     function mostrarFuncion(fechaFuncion) {
       document.getElementById('lobby').style.display = 'none';
       document.getElementById('funcion').style.display = 'block';
@@ -515,10 +517,26 @@
 
       // Calcular en qué segundo debe estar el video
       const segundosTranscurridos = (new Date() - fechaFuncion) / 1000;
+      
       video.addEventListener('loadedmetadata', () => {
         video.currentTime = Math.min(segundosTranscurridos, video.duration - 1);
-        video.play().catch(() => {});
+        video.play().catch(() => {
+          // Si el browser bloquea autoplay, mostrar botón para iniciar
+          const btn = document.createElement('div');
+          btn.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--gold);color:#080709;padding:0.75rem 2rem;border-radius:8px;cursor:pointer;font-weight:500;z-index:50;';
+          btn.textContent = '▶ Tocá para iniciar la función';
+          btn.onclick = () => { video.play(); btn.remove(); };
+          document.body.appendChild(btn);
+        });
       }, { once: true });
+
+      // Prevenir pausa manual
+      video.addEventListener('pause', () => {
+        const esperado = (new Date() - fechaFuncion) / 1000;
+        if (esperado < video.duration) {
+          video.play();
+        }
+      });
 
       // Sincronizar cada 30 segundos por si se desincronizó
       setInterval(() => {
