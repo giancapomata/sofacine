@@ -524,18 +524,42 @@
       document.getElementById('lobby').style.display = 'none';
       document.getElementById('funcion').style.display = 'block';
 
+      const duracion1Ms = (funcion.duracion_min || 94) * 60 * 1000;
+      const intermedioMs = (funcion.intermedio_min || 0) * 60 * 1000;
+      const esDobleFeature = funcion.video_url_2 && intermedioMs > 0;
+
+      const finPeli1 = new Date(fechaFuncion.getTime() + duracion1Ms);
+      const finIntermedio = new Date(finPeli1.getTime() + intermedioMs);
+      const ahora = new Date();
+
+      if (esDobleFeature && ahora >= finPeli1 && ahora < finIntermedio) {
+        // Estamos en el intermedio
+        mostrarIntermedio(finIntermedio);
+        return;
+      }
+
+      if (esDobleFeature && ahora >= finIntermedio) {
+        // Estamos en la segunda película
+        reproducirVideo(funcion.video_url_2, finIntermedio, null, true);
+        return;
+      }
+
+      // Primera película
+      const onTerminar = esDobleFeature ? () => mostrarIntermedio(finPeli1) : null;
+      reproducirVideo(funcion.video_url, fechaFuncion, onTerminar, false);
+    }
+
+    function reproducirVideo(url, desde, onTerminar, esPeli2) {
       const video = document.getElementById('video-player');
-      const videoUrl = funcion.video_url || 'https://dn800304.us.archive.org/0/items/Nosferatu_most_complete_version_93_mins./Nosferatu_1922_Symphony_of_Horror_512kb.mp4';
-      document.getElementById('video-src').src = videoUrl;
+      const fallbackUrl = 'https://dn800304.us.archive.org/0/items/Nosferatu_most_complete_version_93_mins./Nosferatu_1922_Symphony_of_Horror_512kb.mp4';
+      document.getElementById('video-src').src = url || fallbackUrl;
       video.load();
 
-      // Calcular en qué segundo debe estar el video
-      const segundosTranscurridos = (new Date() - fechaFuncion) / 1000;
-      
+      const segundosTranscurridos = (new Date() - desde) / 1000;
+
       video.addEventListener('loadedmetadata', () => {
-        video.currentTime = Math.min(segundosTranscurridos, video.duration - 1);
+        video.currentTime = Math.min(Math.max(segundosTranscurridos, 0), video.duration - 1);
         video.play().catch(() => {
-          // Si el browser bloquea autoplay, mostrar botón para iniciar
           const btn = document.createElement('div');
           btn.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--gold);color:#080709;padding:0.75rem 2rem;border-radius:8px;cursor:pointer;font-weight:500;z-index:50;';
           btn.textContent = '▶ Tocá para iniciar la función';
@@ -546,19 +570,52 @@
 
       // Prevenir pausa manual
       video.addEventListener('pause', () => {
-        const esperado = (new Date() - fechaFuncion) / 1000;
-        if (esperado < video.duration) {
-          video.play();
-        }
+        const esperado = (new Date() - desde) / 1000;
+        if (esperado < video.duration) video.play();
       });
 
-      // Sincronizar cada 30 segundos por si se desincronizó
+      // Sincronizar cada 30 segundos
       setInterval(() => {
-        const esperado = (new Date() - fechaFuncion) / 1000;
+        const esperado = (new Date() - desde) / 1000;
         if (Math.abs(video.currentTime - esperado) > 5) {
-          video.currentTime = esperado;
+          video.currentTime = Math.max(esperado, 0);
         }
       }, 30000);
+
+      // Al terminar el video
+      if (onTerminar) {
+        video.addEventListener('ended', onTerminar, { once: true });
+      }
+    }
+
+    function mostrarIntermedio(finIntermedio) {
+      const video = document.getElementById('video-player');
+      video.pause();
+
+      const overlay = document.createElement('div');
+      overlay.id = 'intermedio-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:#080709;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;';
+      overlay.innerHTML = `
+        <p style="font-size:0.75rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:1rem;">Intermedio</p>
+        <h2 style="font-family:'DM Serif Display',serif;font-size:2.5rem;color:var(--text);margin-bottom:0.5rem;">Volvemos enseguida</h2>
+        <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:2rem;">La segunda película empieza en</p>
+        <div style="font-family:'DM Serif Display',serif;font-size:4rem;color:var(--gold);" id="cd-intermedio">--:--</div>
+        <p style="color:var(--text-muted);font-size:0.8rem;margin-top:1.5rem;">Aprovechá para ir al baño, buscar un snack y volver 🍿</p>`;
+      document.body.appendChild(overlay);
+
+      function updateCdIntermedio() {
+        const diff = finIntermedio - new Date();
+        if (diff <= 0) {
+          overlay.remove();
+          reproducirVideo(funcion.video_url_2, finIntermedio, null, true);
+          return;
+        }
+        const m = Math.floor(diff / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        document.getElementById('cd-intermedio').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      }
+      updateCdIntermedio();
+      setInterval(updateCdIntermedio, 1000);
     }
 
     // ── POST FUNCION ──

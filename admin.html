@@ -222,6 +222,20 @@
             <label>URL del video (archive.org .mp4)</label>
             <input type="text" id="f-video-url" value="${funcion?.video_url || ''}" placeholder="https://dn800304.us.archive.org/..." style="width:100%" />
           </div>
+          <div class="funcion-grid" style="margin-bottom:1rem;">
+            <div class="form-group">
+              <label>Duración película 1 (minutos)</label>
+              <input type="number" id="f-duracion" value="${funcion?.duracion_min || 94}" />
+            </div>
+            <div class="form-group">
+              <label>Intermedio (minutos, 0 = sin intermedio)</label>
+              <input type="number" id="f-intermedio" value="${funcion?.intermedio_min || 0}" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label>URL segunda película (opcional — doble feature)</label>
+            <input type="text" id="f-video-url-2" value="${funcion?.video_url_2 || ''}" placeholder="Dejar vacío si es función simple" style="width:100%" />
+          </div>
           <div class="form-group" style="margin-bottom:0">
             <label>Datos curiosos (uno por línea)</label>
             <textarea id="f-datos-curiosos" rows="4" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:0.65rem 0.875rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.875rem;font-weight:300;outline:none;resize:vertical;">${funcion?.datos_curiosos || ''}</textarea>
@@ -341,6 +355,9 @@
       hora: document.getElementById('f-hora').value,
       precio: parseInt(document.getElementById('f-precio').value),
       video_url: document.getElementById('f-video-url').value,
+      video_url_2: document.getElementById('f-video-url-2').value,
+      duracion_min: parseInt(document.getElementById('f-duracion').value) || 94,
+      intermedio_min: parseInt(document.getElementById('f-intermedio').value) || 0,
       datos_curiosos: document.getElementById('f-datos-curiosos').value
     }).eq('id', 1);
 
