@@ -230,16 +230,17 @@
                 <span class="price-value"><span class="price-currency">G </span><span id="precio-display">10.000</span></span>
               </div>
               <div id="form-wrap">
-                <div class="form-group">
+                <div class="form-group" id="campo-nombre">
                   <label for="nombre">Tu nombre</label>
                   <input type="text" id="nombre" placeholder="Ej: Maria Garcia" autocomplete="name" />
                   <p class="error-msg" id="err-nombre">Ingresa tu nombre</p>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="campo-email">
                   <label for="email">Tu email</label>
                   <input type="email" id="email" placeholder="tu@email.com" autocomplete="email" />
                   <p class="error-msg" id="err-email">Ingresa un email valido</p>
                 </div>
+                <p id="reserva-logueado" style="display:none;font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;">Reservando como <strong id="reserva-username" style="color:var(--gold)"></strong></p>
                 <button class="btn-reservar" id="btn-reservar" onclick="reservar()">Reservar mi entrada</button>
                 <div class="pago-info" id="pago-info">
                   <strong>Ya casi! Completa el pago para confirmar tu lugar.</strong><br/><br/>
@@ -295,6 +296,16 @@
         if (navRight) navRight.innerHTML =
           `<a href="/perfil" style="color:var(--gold);font-size:0.875rem;text-decoration:none;">${p?.username || session.user.email}</a>
            <span style="color:var(--text-muted);font-size:0.875rem;cursor:pointer;" onclick="salir()">Salir</span>`;
+
+        // Ocultar campos de nombre y email en el formulario de reserva
+        document.getElementById('campo-nombre').style.display = 'none';
+        document.getElementById('campo-email').style.display = 'none';
+        document.getElementById('reserva-logueado').style.display = 'block';
+        document.getElementById('reserva-username').textContent = p?.username || session.user.email;
+
+        // Guardar datos para usar al reservar
+        window._sessionNombre = p?.username || session.user.email;
+        window._sessionEmail = session.user.email;
       } else {
         // Visitante: mostrar Ingresar y Crear cuenta
         if (navRight) navRight.innerHTML =
@@ -357,17 +368,24 @@
     }
 
     async function reservar() {
-      const nombre=document.getElementById('nombre').value.trim();
-      const email=document.getElementById('email').value.trim();
-      let ok=true;
-      document.getElementById('err-nombre').classList.remove('visible');
-      document.getElementById('err-email').classList.remove('visible');
-      if(!nombre){document.getElementById('err-nombre').classList.add('visible');ok=false;}
-      if(!email||!email.includes('@')){document.getElementById('err-email').classList.add('visible');ok=false;}
-      if(!ok) return;
+      // Si está logueado, usar datos de sesión; sino, usar los campos del formulario
+      let nombre, email;
+      if (window._sessionNombre) {
+        nombre = window._sessionNombre;
+        email = window._sessionEmail;
+      } else {
+        nombre = document.getElementById('nombre').value.trim();
+        email = document.getElementById('email').value.trim();
+        let ok = true;
+        document.getElementById('err-nombre').classList.remove('visible');
+        document.getElementById('err-email').classList.remove('visible');
+        if (!nombre) { document.getElementById('err-nombre').classList.add('visible'); ok = false; }
+        if (!email || !email.includes('@')) { document.getElementById('err-email').classList.add('visible'); ok = false; }
+        if (!ok) return;
+      }
 
-      const btn=document.getElementById('btn-reservar');
-      btn.disabled=true; btn.textContent='Guardando...';
+      const btn = document.getElementById('btn-reservar');
+      btn.disabled = true; btn.textContent = 'Guardando...';
 
       const f = window._funcion;
       try {
@@ -377,12 +395,12 @@
           fecha_funcion: f?.fecha || '2025-06-14',
           estado: 'pendiente_pago'
         });
-      } catch(e){}
+      } catch(e) {}
 
       window._reservas = (window._reservas || 0) + 1;
-      document.getElementById('aforo-num').textContent=(window._total - window._reservas)+' restantes';
-      document.getElementById('aforo-fill').style.width=(window._reservas/window._total*100)+'%';
-      document.getElementById('form-wrap').style.display='none';
+      document.getElementById('aforo-num').textContent = (window._total - window._reservas) + ' restantes';
+      document.getElementById('aforo-fill').style.width = (window._reservas / window._total * 100) + '%';
+      document.getElementById('form-wrap').style.display = 'none';
       document.getElementById('success-msg').classList.add('visible');
       document.getElementById('pago-info').classList.add('visible');
     }
