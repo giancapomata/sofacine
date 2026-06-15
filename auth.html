@@ -203,6 +203,10 @@
             <input type="email" id="reg-email" placeholder="tu@email.com" autocomplete="email" />
           </div>
           <div class="form-group">
+            <label for="reg-celular">Celular (WhatsApp)</label>
+            <input type="tel" id="reg-celular" placeholder="ej: 0981 123 456" autocomplete="tel" />
+          </div>
+          <div class="form-group">
             <label for="reg-pass">Contrasena</label>
             <input type="password" id="reg-pass" placeholder="minimo 6 caracteres" autocomplete="new-password" />
           </div>
@@ -283,9 +287,10 @@
     window.registro = async function() {
       const username = document.getElementById('reg-username').value.trim();
       const email    = document.getElementById('reg-email').value.trim();
+      const celular  = document.getElementById('reg-celular').value.trim();
       const pass     = document.getElementById('reg-pass').value;
 
-      if (!username || !email || !pass) { showMsg('msg-registro', 'Completa todos los campos', 'error'); return; }
+      if (!username || !email || !celular || !pass) { showMsg('msg-registro', 'Completa todos los campos', 'error'); return; }
       if (pass.length < 6) { showMsg('msg-registro', 'La contrasena debe tener al menos 6 caracteres', 'error'); return; }
 
       const btn = document.getElementById('btn-registro');
@@ -318,6 +323,7 @@
         await supabase.from('perfiles').insert({
           id: data.user.id,
           username,
+          celular,
           bio: '',
           avatar_url: ''
         });

@@ -214,6 +214,7 @@
                   <tr>
                     <th>Nombre</th>
                     <th>Email</th>
+                    <th>Celular</th>
                     <th>Pelicula</th>
                     <th>Estado</th>
                     <th>Acceso</th>
@@ -221,10 +222,14 @@
                   </tr>
                 </thead>
                 <tbody>
-                  ${reservas.map(r => `
+                  ${reservas.map(r => {
+                    const perfil = usuarios?.find(u => u.username === r.nombre || u.id === r.usuario_id);
+                    const celular = perfil?.celular || '—';
+                    return `
                     <tr id="row-${r.id}">
                       <td>${r.nombre}</td>
                       <td style="color:var(--text-muted)">${r.email}</td>
+                      <td style="color:var(--text-muted)">${celular}</td>
                       <td style="color:var(--text-muted)">${r.pelicula}</td>
                       <td>
                         <span class="badge ${r.estado === 'confirmado' ? 'badge-confirmed' : 'badge-pending'}">
@@ -241,7 +246,8 @@
                           ? `<button class="btn-confirm" onclick="confirmarReserva(${r.id}, '${r.email}', '${r.nombre}')">Confirmar pago</button>`
                           : ''}
                       </td>
-                    </tr>`).join('')}
+                    </tr>`;
+                  }).join('')}
                 </tbody>
               </table>`}
         </div>
