@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sofacine — Sala</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080709; --bg2: #111019; --bg3: #191821;
+      --gold: #e8b86d; --gold-dim: #9a7438;
+      --text: #f0eee8; --text-muted: #7a7880; --text-dim: #3a3840;
+      --border: rgba(255,255,255,0.06); --border-gold: rgba(232,184,109,0.2);
+      --green: #3a8a5c; --green-bg: rgba(58,138,92,0.08);
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 300; min-height: 100vh; }
+
+    /* NAV */
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; border-bottom: 1px solid var(--border); position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(8,7,9,0.95); backdrop-filter: blur(10px); }
+    .logo { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--gold); letter-spacing: -0.02em; text-decoration: none; }
+    .logo span { font-style: italic; color: var(--text); }
+    .nav-info { font-size: 0.78rem; color: var(--text-muted); }
+    .nav-info strong { color: var(--text); }
+
+    /* ESTADO GENERAL */
+    #sala-wrap { padding-top: 57px; min-height: 100vh; }
+
+    /* ACCESO DENEGADO */
+    .acceso-denegado { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 57px); text-align: center; padding: 2rem; }
+    .acceso-denegado h2 { font-family: 'DM Serif Display', serif; font-size: 1.8rem; margin-bottom: 1rem; }
+    .acceso-denegado p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .btn-volver { background: var(--gold); color: #080709; border: none; border-radius: 8px; padding: 0.75rem 1.5rem; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; text-decoration: none; }
+
+    /* LOBBY */
+    #lobby { display: none; max-width: 900px; margin: 0 auto; padding: 2.5rem 2rem; }
+    .lobby-header { text-align: center; margin-bottom: 2.5rem; }
+    .lobby-eyebrow { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.75rem; }
+    .lobby-titulo { font-family: 'DM Serif Display', serif; font-size: clamp(1.8rem, 4vw, 2.8rem); color: var(--text); margin-bottom: 0.5rem; }
+    .lobby-meta { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 2rem; }
+
+    .countdown-lobby { display: flex; gap: 1rem; justify-content: center; margin-bottom: 2.5rem; }
+    .cd-block { text-align: center; background: var(--bg2); border: 1px solid var(--border-gold); border-radius: 10px; padding: 0.875rem 1.25rem; min-width: 70px; }
+    .cd-num { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--gold); line-height: 1; display: block; }
+    .cd-label { font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.25rem; display: block; }
+
+    .lobby-grid { display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem; }
+
+    /* DATOS CURIOSOS / TRIVIA */
+    .lobby-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+    .lobby-card-title { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.25rem; }
+    .dato-item { display: flex; gap: 0.75rem; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+    .dato-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .dato-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .dato-text { font-size: 0.83rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* TRIVIA */
+    .trivia-wrap { }
+    .trivia-pregunta { font-size: 0.9rem; color: var(--text); margin-bottom: 1rem; line-height: 1.5; font-weight: 400; }
+    .trivia-opciones { display: flex; flex-direction: column; gap: 0.5rem; }
+    .trivia-btn { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 1rem; color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 0.82rem; cursor: pointer; text-align: left; transition: all 0.2s; }
+    .trivia-btn:hover { border-color: var(--border-gold); color: var(--text); }
+    .trivia-btn.correcto { border-color: #3a8a5c; background: rgba(58,138,92,0.1); color: #6abf8a; }
+    .trivia-btn.incorrecto { border-color: rgba(224,112,112,0.3); background: rgba(224,112,112,0.08); color: #e07070; }
+    .trivia-result { font-size: 0.82rem; margin-top: 0.75rem; padding: 0.75rem; border-radius: 8px; }
+    .trivia-next { background: none; border: 1px solid var(--border-gold); border-radius: 8px; padding: 0.5rem 1rem; color: var(--gold); font-family: 'DM Sans', sans-serif; font-size: 0.78rem; cursor: pointer; margin-top: 0.75rem; }
+
+    /* CHAT LOBBY */
+    .chat-wrap { display: flex; flex-direction: column; height: 400px; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 0.75rem 0; display: flex; flex-direction: column; gap: 0.5rem; }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-track { background: transparent; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .chat-msg { font-size: 0.82rem; line-height: 1.5; }
+    .chat-msg .msg-user { color: var(--gold); font-weight: 500; margin-right: 0.4rem; }
+    .chat-msg .msg-text { color: var(--text-muted); }
+    .chat-msg.sistema { color: var(--text-dim); font-style: italic; font-size: 0.75rem; text-align: center; }
+    .chat-input-wrap { display: flex; gap: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+    .chat-input { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.875rem; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.82rem; outline: none; }
+    .chat-input:focus { border-color: var(--border-gold); }
+    .chat-send { background: var(--gold); color: #080709; border: none; border-radius: 8px; padding: 0.6rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 500; cursor: pointer; }
+
+    /* FUNCION - VIDEO */
+    #funcion { display: none; }
+    .video-wrap { position: relative; background: #000; }
+    .video-wrap video { width: 100%; max-height: calc(100vh - 57px); display: block; }
+    .video-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); }
+    .video-espera { text-align: center; }
+    .video-espera h3 { font-family: 'DM Serif Display', serif; font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .video-espera p { color: var(--text-muted); font-size: 0.85rem; }
+
+    /* POST FUNCION */
+    #post-funcion { display: none; max-width: 900px; margin: 0 auto; padding: 2.5rem 2rem; }
+    .post-header { text-align: center; margin-bottom: 2.5rem; }
+    .post-header h2 { font-family: 'DM Serif Display', serif; font-size: 2rem; margin-bottom: 0.5rem; }
+    .post-header p { color: var(--text-muted); font-size: 0.85rem; }
+    .post-grid { display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem; }
+
+    /* REVIEW */
+    .review-card { background: var(--bg2); border: 1px solid var(--border-gold); border-radius: 12px; padding: 1.5rem; }
+    .review-card h3 { font-family: 'DM Serif Display', serif; font-size: 1.1rem; margin-bottom: 1.25rem; }
+    .stars-wrap { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .star { font-size: 1.5rem; cursor: pointer; opacity: 0.3; transition: opacity 0.15s; }
+    .star.active { opacity: 1; }
+    .review-textarea { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 300; outline: none; resize: none; margin-bottom: 1rem; }
+    .review-textarea:focus { border-color: var(--border-gold); }
+    .btn-review { background: var(--gold); color: #080709; border: none; border-radius: 8px; padding: 0.75rem 1.5rem; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; width: 100%; }
+    .btn-review:disabled { background: var(--gold-dim); cursor: not-allowed; }
+
+    /* ESPECTADORES */
+    .espectadores-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+    .espectadores-card h3 { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; }
+    .espectador-item { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0; border-bottom: 1px solid var(--border); }
+    .espectador-item:last-child { border-bottom: none; }
+    .espectador-name { font-size: 0.85rem; color: var(--text); }
+    .btn-dm { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 0.3rem 0.75rem; color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 0.72rem; cursor: pointer; transition: all 0.2s; }
+    .btn-dm:hover { border-color: var(--border-gold); color: var(--gold); }
+
+    /* MODAL DM */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; display: none; align-items: center; justify-content: center; padding: 1.5rem; }
+    .modal-overlay.visible { display: flex; }
+    .modal { background: var(--bg2); border: 1px solid var(--border-gold); border-radius: 16px; padding: 1.5rem; width: 100%; max-width: 400px; }
+    .modal h3 { font-family: 'DM Serif Display', serif; font-size: 1.1rem; margin-bottom: 1rem; }
+    .modal textarea { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 300; outline: none; resize: none; margin-bottom: 1rem; }
+    .modal-actions { display: flex; gap: 0.75rem; }
+    .btn-cancel { flex: 1; background: none; border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem; color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer; }
+    .btn-send { flex: 2; background: var(--gold); color: #080709; border: none; border-radius: 8px; padding: 0.65rem; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; cursor: pointer; }
+
+    .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--bg3); border: 1px solid var(--border-gold); border-radius: 10px; padding: 0.875rem 1.25rem; font-size: 0.85rem; color: var(--text); z-index: 999; transform: translateY(100px); opacity: 0; transition: all 0.3s; }
+    .toast.visible { transform: translateY(0); opacity: 1; }
+
+    @media (max-width: 700px) {
+      .lobby-grid, .post-grid { grid-template-columns: 1fr; }
+      .countdown-lobby { gap: 0.5rem; }
+      .cd-block { min-width: 55px; padding: 0.6rem 0.75rem; }
+      .cd-num { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/" class="logo">sofa<span>cine</span></a>
+    <div class="nav-info" id="nav-info"></div>
+  </nav>
+
+  <div id="sala-wrap">
+    <div id="estado-carga" style="display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 57px);">
+      <p style="color:var(--text-muted);font-size:0.85rem;">Verificando acceso...</p>
+    </div>
+
+    <!-- ACCESO DENEGADO -->
+    <div id="acceso-denegado" style="display:none;" class="acceso-denegado">
+      <h2>Acceso no válido</h2>
+      <p>Este link de acceso no existe, ya fue usado, o no corresponde a esta función.</p>
+      <a href="/" class="btn-volver">Volver al inicio</a>
+    </div>
+
+    <!-- LOBBY -->
+    <div id="lobby">
+      <div class="lobby-header">
+        <p class="lobby-eyebrow">Esta noche en Sofacine</p>
+        <h1 class="lobby-titulo" id="lobby-titulo">Nosferatu</h1>
+        <p class="lobby-meta" id="lobby-meta">F.W. Murnau · 1922 · 1h 34min</p>
+        <div class="countdown-lobby" id="cd-lobby">
+          <div class="cd-block"><span class="cd-num" id="cdl-h">--</span><span class="cd-label">horas</span></div>
+          <div class="cd-block"><span class="cd-num" id="cdl-m">--</span><span class="cd-label">min</span></div>
+          <div class="cd-block"><span class="cd-num" id="cdl-s">--</span><span class="cd-label">seg</span></div>
+        </div>
+        <p style="font-size:0.78rem;color:var(--text-muted);">La función empieza a la hora exacta. Podés charlar con los demás espectadores mientras esperás.</p>
+      </div>
+
+      <div class="lobby-grid">
+        <div>
+          <!-- DATOS CURIOSOS -->
+          <div class="lobby-card" style="margin-bottom:1.5rem;">
+            <p class="lobby-card-title">Sobre esta película</p>
+            <div id="datos-curiosos-wrap"></div>
+          </div>
+
+          <!-- TRIVIA -->
+          <div class="lobby-card" id="trivia-card">
+            <p class="lobby-card-title">Trivia</p>
+            <div id="trivia-wrap"></div>
+          </div>
+        </div>
+
+        <!-- CHAT LOBBY -->
+        <div class="lobby-card">
+          <p class="lobby-card-title">Chat de la sala</p>
+          <div class="chat-wrap">
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-input-wrap">
+              <input type="text" class="chat-input" id="chat-input" placeholder="Decí algo..." maxlength="200" />
+              <button class="chat-send" onclick="enviarMensaje()">→</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FUNCION - VIDEO -->
+    <div id="funcion">
+      <div class="video-wrap">
+        <video id="video-player" controls>
+          <source id="video-src" src="" type="video/mp4" />
+        </video>
+      </div>
+    </div>
+
+    <!-- POST FUNCION -->
+    <div id="post-funcion">
+      <div class="post-header">
+        <h2>¿Qué te pareció?</h2>
+        <p id="post-meta" style="color:var(--text-muted);font-size:0.85rem;"></p>
+      </div>
+      <div class="post-grid">
+        <!-- REVIEW -->
+        <div class="review-card">
+          <h3>Tu review</h3>
+          <div class="stars-wrap" id="stars-wrap">
+            <span class="star" data-val="1">★</span>
+            <span class="star" data-val="2">★</span>
+            <span class="star" data-val="3">★</span>
+            <span class="star" data-val="4">★</span>
+            <span class="star" data-val="5">★</span>
+          </div>
+          <textarea class="review-textarea" id="review-text" rows="5" placeholder="Contá qué te pareció la película..."></textarea>
+          <button class="btn-review" id="btn-review" onclick="guardarReview()">Guardar review</button>
+          <div id="review-msg" style="margin-top:0.75rem;font-size:0.82rem;"></div>
+        </div>
+
+        <!-- ESPECTADORES -->
+        <div>
+          <div class="espectadores-card">
+            <h3>Espectadores de esta noche</h3>
+            <div id="espectadores-list"></div>
+          </div>
+          <!-- CHAT POST -->
+          <div class="lobby-card" style="margin-top:1.5rem;">
+            <p class="lobby-card-title">Debate post-función</p>
+            <div class="chat-wrap">
+              <div class="chat-messages" id="post-chat-messages"></div>
+              <div class="chat-input-wrap">
+                <input type="text" class="chat-input" id="post-chat-input" placeholder="¿Qué te pareció?" maxlength="200" />
+                <button class="chat-send" onclick="enviarMensajePost()">→</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DM -->
+  <div class="modal-overlay" id="modal-dm">
+    <div class="modal">
+      <h3 id="modal-dm-titulo">Mensaje a usuario</h3>
+      <textarea id="dm-text" rows="4" placeholder="Escribí tu mensaje..."></textarea>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="cerrarDM()">Cancelar</button>
+        <button class="btn-send" onclick="enviarDM()">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    const sb = createClient('https://wkuhwajoebdfntcokilx.supabase.co','sb_publishable_3G7eC0rb4fcGHQKzq6qidQ_54IkDdtM');
+
+    // ── ESTADO GLOBAL ──
+    let currentUser = null;
+    let perfil = null;
+    let funcion = null;
+    let reserva = null;
+    let triviaIdx = 0;
+    let triviaData = [];
+    let estrellas = 0;
+    let dmDestinatario = null;
+    let chatChannel = null;
+    let postChatChannel = null;
+
+    // ── VERIFICAR SESION Y TOKEN ──
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = '/auth'; }
+    else {
+      currentUser = session.user;
+      const { data: p } = await sb.from('perfiles').select('*').eq('id', currentUser.id).single();
+      perfil = p;
+
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+
+      if (!token) { mostrarDenegado(); }
+      else {
+        // Verificar token en reservas
+        const { data: r } = await sb.from('reservas')
+          .select('*').eq('token', token).eq('estado', 'confirmado').single();
+
+        if (!r) { mostrarDenegado(); }
+        else {
+          reserva = r;
+          // Cargar función
+          const { data: f } = await sb.from('funciones')
+            .select('*').limit(1).order('id', { ascending: false }).single();
+          funcion = f;
+
+          document.getElementById('nav-info').innerHTML =
+            `<strong>${perfil?.username || currentUser.email}</strong> · ${f?.pelicula || 'Sofacine'}`;
+
+          document.getElementById('estado-carga').style.display = 'none';
+          iniciarSala();
+        }
+      }
+    }
+
+    function mostrarDenegado() {
+      document.getElementById('estado-carga').style.display = 'none';
+      document.getElementById('acceso-denegado').style.display = 'flex';
+    }
+
+    // ── INICIAR SALA ──
+    function iniciarSala() {
+      const ahora = new Date();
+      const fechaFuncion = new Date(`${funcion.fecha}T${funcion.hora}-04:00`);
+      const duracionMs = 94 * 60 * 1000; // ~94 min Nosferatu
+      const finFuncion = new Date(fechaFuncion.getTime() + duracionMs);
+
+      if (ahora < fechaFuncion) {
+        mostrarLobby(fechaFuncion);
+      } else if (ahora >= fechaFuncion && ahora < finFuncion) {
+        mostrarFuncion(fechaFuncion);
+      } else {
+        mostrarPostFuncion();
+      }
+
+      // Revisar cada 10 segundos si cambió el estado
+      setInterval(() => {
+        const now = new Date();
+        if (now >= fechaFuncion && now < finFuncion) {
+          if (document.getElementById('lobby').style.display !== 'none') {
+            mostrarFuncion(fechaFuncion);
+          }
+        } else if (now >= finFuncion) {
+          if (document.getElementById('funcion').style.display !== 'none') {
+            mostrarPostFuncion();
+          }
+        }
+      }, 10000);
+    }
+
+    // ── LOBBY ──
+    function mostrarLobby(fechaFuncion) {
+      document.getElementById('lobby').style.display = 'block';
+
+      // Título y meta
+      document.getElementById('lobby-titulo').textContent = funcion.pelicula || 'Nosferatu';
+      document.getElementById('lobby-meta').textContent = funcion.meta || 'F.W. Murnau · 1922';
+
+      // Countdown
+      function updateCd() {
+        const diff = fechaFuncion - new Date();
+        if (diff <= 0) { return; }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        document.getElementById('cdl-h').textContent = String(h).padStart(2,'0');
+        document.getElementById('cdl-m').textContent = String(m).padStart(2,'0');
+        document.getElementById('cdl-s').textContent = String(s).padStart(2,'0');
+      }
+      updateCd(); setInterval(updateCd, 1000);
+
+      // Datos curiosos
+      const datos = funcion.datos_curiosos
+        ? funcion.datos_curiosos.split('\n').filter(d => d.trim())
+        : [
+            'Nosferatu fue filmada sin permiso de los herederos de Bram Stoker. Un tribunal ordenó destruir todas las copias, pero algunas sobrevivieron.',
+            'Max Schreck, el actor que interpretó al Conde Orlok, era tan misterioso en el set que circuló el rumor de que era un vampiro real.',
+            'El director F.W. Murnau usó técnicas innovadoras como la aceleración del film para crear efectos sobrenaturales con recursos mínimos.',
+            'La película es considerada una de las fundadoras del género de terror en el cine. Su influencia se siente hasta hoy en todas las películas de vampiros.'
+          ];
+
+      document.getElementById('datos-curiosos-wrap').innerHTML = datos.map((d, i) => `
+        <div class="dato-item">
+          <span class="dato-icon">${['🎬','🧛','📽️','💡','🎭','🌙'][i % 6]}</span>
+          <p class="dato-text">${d}</p>
+        </div>`).join('');
+
+      // Trivia
+      triviaData = funcion.trivia && funcion.trivia.length > 0
+        ? funcion.trivia
+        : [
+            { p: '¿En qué año fue filmada Nosferatu?', ops: ['1919', '1922', '1925', '1931'], r: 1 },
+            { p: '¿Cómo se llama el vampiro en Nosferatu (no Drácula)?', ops: ['Conde Drácula', 'Conde Orlok', 'Conde Malfoy', 'Conde Barker'], r: 1 },
+            { p: '¿Qué pasó con el nombre de Drácula en la película?', ops: ['Se mantuvo igual', 'Fue cambiado por razones legales', 'El director lo inventó', 'No hay vampiro'], r: 1 },
+            { p: '¿Cuánto dura aproximadamente Nosferatu?', ops: ['45 minutos', '2 horas', '94 minutos', '3 horas'], r: 2 }
+          ];
+      renderTrivia();
+
+      // Chat realtime
+      iniciarChat();
+    }
+
+    // ── TRIVIA ──
+    function renderTrivia() {
+      if (triviaIdx >= triviaData.length) {
+        document.getElementById('trivia-wrap').innerHTML = '<p style="font-size:0.82rem;color:var(--text-muted);">¡Terminaste la trivia! Esperá que empiece la función.</p>';
+        return;
+      }
+      const t = triviaData[triviaIdx];
+      document.getElementById('trivia-wrap').innerHTML = `
+        <p class="trivia-pregunta">${t.p}</p>
+        <div class="trivia-opciones">
+          ${t.ops.map((op, i) => `<button class="trivia-btn" onclick="responderTrivia(${i}, ${t.r})">${op}</button>`).join('')}
+        </div>
+        <div class="trivia-result" id="trivia-result"></div>`;
+    }
+
+    window.responderTrivia = function(idx, correcto) {
+      const btns = document.querySelectorAll('.trivia-btn');
+      btns.forEach(b => b.disabled = true);
+      btns[idx].classList.add(idx === correcto ? 'correcto' : 'incorrecto');
+      btns[correcto].classList.add('correcto');
+      const res = document.getElementById('trivia-result');
+      res.style.background = idx === correcto ? 'rgba(58,138,92,0.1)' : 'rgba(224,112,112,0.08)';
+      res.style.color = idx === correcto ? '#6abf8a' : '#e07070';
+      res.innerHTML = idx === correcto
+        ? '✓ ¡Correcto!'
+        : '✗ Incorrecto.';
+      res.innerHTML += ` <button class="trivia-next" onclick="siguienteTrivia()">Siguiente →</button>`;
+    };
+
+    window.siguienteTrivia = function() {
+      triviaIdx++;
+      renderTrivia();
+    };
+
+    // ── CHAT REALTIME ──
+    function iniciarChat() {
+      chatChannel = sb.channel('lobby-chat-' + funcion.id);
+      chatChannel
+        .on('broadcast', { event: 'mensaje' }, ({ payload }) => {
+          agregarMensaje(payload.user, payload.text, 'chat-messages');
+        })
+        .subscribe();
+
+      document.getElementById('chat-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensaje(); }
+      });
+
+      agregarMensaje(null, `${perfil?.username || 'tú'} entró a la sala`, 'chat-messages', true);
+    }
+
+    window.enviarMensaje = function() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      chatChannel.send({ type: 'broadcast', event: 'mensaje', payload: { user: perfil?.username || 'Usuario', text } });
+      agregarMensaje(perfil?.username || 'Usuario', text, 'chat-messages');
+    };
+
+    function iniciarPostChat() {
+      postChatChannel = sb.channel('post-chat-' + funcion.id);
+      postChatChannel
+        .on('broadcast', { event: 'mensaje' }, ({ payload }) => {
+          agregarMensaje(payload.user, payload.text, 'post-chat-messages');
+        })
+        .subscribe();
+
+      document.getElementById('post-chat-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensajePost(); }
+      });
+    }
+
+    window.enviarMensajePost = function() {
+      const input = document.getElementById('post-chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      postChatChannel.send({ type: 'broadcast', event: 'mensaje', payload: { user: perfil?.username || 'Usuario', text } });
+      agregarMensaje(perfil?.username || 'Usuario', text, 'post-chat-messages');
+    };
+
+    function agregarMensaje(user, text, containerId, sistema = false) {
+      const wrap = document.getElementById(containerId);
+      if (!wrap) return;
+      const div = document.createElement('div');
+      div.className = 'chat-msg' + (sistema ? ' sistema' : '');
+      div.innerHTML = sistema
+        ? text
+        : `<span class="msg-user">${user}</span><span class="msg-text">${text}</span>`;
+      wrap.appendChild(div);
+      wrap.scrollTop = wrap.scrollHeight;
+    }
+
+    // ── FUNCION ──
+    function mostrarFuncion(fechaFuncion) {
+      document.getElementById('lobby').style.display = 'none';
+      document.getElementById('funcion').style.display = 'block';
+
+      const video = document.getElementById('video-player');
+      const videoUrl = funcion.video_url || 'https://dn800304.us.archive.org/0/items/Nosferatu_most_complete_version_93_mins./Nosferatu_1922_Symphony_of_Horror_512kb.mp4';
+      document.getElementById('video-src').src = videoUrl;
+      video.load();
+
+      // Calcular en qué segundo debe estar el video
+      const segundosTranscurridos = (new Date() - fechaFuncion) / 1000;
+      video.addEventListener('loadedmetadata', () => {
+        video.currentTime = Math.min(segundosTranscurridos, video.duration - 1);
+        video.play().catch(() => {});
+      }, { once: true });
+
+      // Sincronizar cada 30 segundos por si se desincronizó
+      setInterval(() => {
+        const esperado = (new Date() - fechaFuncion) / 1000;
+        if (Math.abs(video.currentTime - esperado) > 5) {
+          video.currentTime = esperado;
+        }
+      }, 30000);
+    }
+
+    // ── POST FUNCION ──
+    async function mostrarPostFuncion() {
+      document.getElementById('lobby').style.display = 'none';
+      document.getElementById('funcion').style.display = 'none';
+      document.getElementById('post-funcion').style.display = 'block';
+
+      document.getElementById('post-meta').textContent = `${funcion?.pelicula} · ${funcion?.meta}`;
+
+      // Estrellas
+      document.querySelectorAll('.star').forEach(s => {
+        s.addEventListener('click', () => {
+          estrellas = parseInt(s.dataset.val);
+          document.querySelectorAll('.star').forEach((st, i) => {
+            st.classList.toggle('active', i < estrellas);
+          });
+        });
+      });
+
+      // Espectadores de esta función
+      const { data: reservas } = await sb.from('reservas')
+        .select('nombre, email').eq('pelicula', funcion.pelicula).eq('estado', 'confirmado');
+
+      const lista = document.getElementById('espectadores-list');
+      if (reservas && reservas.length > 0) {
+        lista.innerHTML = reservas
+          .filter(r => r.email !== currentUser.email)
+          .map(r => `
+            <div class="espectador-item">
+              <span class="espectador-name">${r.nombre}</span>
+              <button class="btn-dm" onclick="abrirDM('${r.nombre}', '${r.email}')">Mensaje</button>
+            </div>`).join('') || '<p style="font-size:0.82rem;color:var(--text-dim)">Solo estás vos esta noche.</p>';
+      }
+
+      iniciarPostChat();
+    }
+
+    // ── REVIEW ──
+    window.guardarReview = async function() {
+      if (!estrellas) { mostrarToast('Elegí una calificación'); return; }
+      const texto = document.getElementById('review-text').value.trim();
+      const btn = document.getElementById('btn-review');
+      btn.disabled = true; btn.textContent = 'Guardando...';
+
+      await sb.from('reservas').update({
+        rating: estrellas,
+        review: texto
+      }).eq('token', reserva.token);
+
+      document.getElementById('review-msg').style.color = '#6abf8a';
+      document.getElementById('review-msg').textContent = '¡Review guardada! Gracias.';
+      btn.textContent = 'Guardado ✓';
+    };
+
+    // ── MENSAJES DIRECTOS ──
+    window.abrirDM = function(nombre, email) {
+      dmDestinatario = { nombre, email };
+      document.getElementById('modal-dm-titulo').textContent = `Mensaje a ${nombre}`;
+      document.getElementById('dm-text').value = '';
+      document.getElementById('modal-dm').classList.add('visible');
+    };
+
+    window.cerrarDM = function() {
+      document.getElementById('modal-dm').classList.remove('visible');
+    };
+
+    window.enviarDM = async function() {
+      const texto = document.getElementById('dm-text').value.trim();
+      if (!texto || !dmDestinatario) return;
+
+      // Guardar en tabla mensajes
+      await sb.from('mensajes').insert({
+        de_id: currentUser.id,
+        de_username: perfil?.username || currentUser.email,
+        para_email: dmDestinatario.email,
+        texto,
+        leido: false
+      });
+
+      cerrarDM();
+      mostrarToast(`Mensaje enviado a ${dmDestinatario.nombre}`);
+    };
+
+    // ── UTILS ──
+    function mostrarToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('visible');
+      setTimeout(() => t.classList.remove('visible'), 3000);
+    }
+  </script>
+</body>
+</html>
