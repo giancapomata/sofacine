@@ -427,16 +427,6 @@
       .from('perfiles').select('*').eq('id', currentUser.id).single();
     perfil = p;
 
-    // Cargar proxima funcion desde Supabase
-    const { data: funcion } = await supabase
-      .from('funciones').select('*').limit(1).order('id', { ascending: false }).single();
-    if (funcion) {
-      document.getElementById('sidebar-pelicula').textContent = funcion.pelicula;
-      const fecha = new Date(funcion.fecha + 'T00:00:00');
-      const fechaStr = fecha.toLocaleDateString('es-PY', { weekday: 'long', day: 'numeric', month: 'long' });
-      document.getElementById('sidebar-meta').textContent = `${funcion.meta} · ${fechaStr} · ${funcion.hora.slice(0,5)} hs`;
-    }
-
     // Cargar top5
     const { data: t } = await supabase
       .from('top5').select('*').eq('usuario_id', currentUser.id).order('posicion');
@@ -449,6 +439,20 @@
 
     document.getElementById('nav-username').textContent = perfil?.username || currentUser.email;
     renderPerfil();
+
+    // Cargar proxima funcion DESPUÉS del render (para que el DOM ya exista)
+    const { data: funcion } = await supabase
+      .from('funciones').select('*').limit(1).order('id', { ascending: false }).single();
+    if (funcion) {
+      const sidebarPeli = document.getElementById('sidebar-pelicula');
+      const sidebarMeta = document.getElementById('sidebar-meta');
+      if (sidebarPeli) sidebarPeli.textContent = funcion.pelicula;
+      if (sidebarMeta) {
+        const fecha = new Date(funcion.fecha + 'T00:00:00');
+        const fechaStr = fecha.toLocaleDateString('es-PY', { weekday: 'long', day: 'numeric', month: 'long' });
+        sidebarMeta.textContent = `${funcion.meta} · ${fechaStr} · ${funcion.hora.slice(0,5)} hs`;
+      }
+    }
   }
 
   function renderPerfil() {
