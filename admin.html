@@ -217,6 +217,16 @@
             <input type="number" id="f-precio" value="${funcion?.precio || 10000}" style="max-width:200px" />
           </div>
         </div>
+        <div style="margin-top:1rem;">
+          <div class="form-group" style="margin-bottom:1rem;">
+            <label>URL del video (archive.org .mp4)</label>
+            <input type="text" id="f-video-url" value="${funcion?.video_url || ''}" placeholder="https://dn800304.us.archive.org/..." style="width:100%" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Datos curiosos (uno por línea)</label>
+            <textarea id="f-datos-curiosos" rows="4" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:0.65rem 0.875rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.875rem;font-weight:300;outline:none;resize:vertical;">${funcion?.datos_curiosos || ''}</textarea>
+          </div>
+        </div>
       </div>
 
       <!-- RESERVAS -->
@@ -315,12 +325,23 @@
     const btn = document.getElementById('btn-guardar-funcion');
     btn.disabled = true; btn.textContent = 'Guardando...';
 
+    // Corregir año automáticamente al año actual
+    let fecha = document.getElementById('f-fecha').value;
+    if (fecha) {
+      const partes = fecha.split('-');
+      const hoy = new Date();
+      partes[0] = hoy.getFullYear();
+      fecha = partes.join('-');
+    }
+
     const { error } = await supabase.from('funciones').update({
       pelicula: document.getElementById('f-pelicula').value,
       meta: document.getElementById('f-meta').value,
-      fecha: document.getElementById('f-fecha').value,
+      fecha,
       hora: document.getElementById('f-hora').value,
-      precio: parseInt(document.getElementById('f-precio').value)
+      precio: parseInt(document.getElementById('f-precio').value),
+      video_url: document.getElementById('f-video-url').value,
+      datos_curiosos: document.getElementById('f-datos-curiosos').value
     }).eq('id', 1);
 
     if (error) {
