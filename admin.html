@@ -142,6 +142,11 @@
     const { data: funcion } = await supabase
       .from('funciones').select('*').limit(1).order('id', { ascending: false }).single();
 
+    const { data: config } = await supabase
+      .from('config').select('*').limit(1).single();
+
+    const whatsapp = config?.whatsapp || '0982798679';
+
     const total = reservas?.length || 0;
     const confirmadas = reservas?.filter(r => r.estado === 'confirmado').length || 0;
     const pendientes = reservas?.filter(r => r.estado === 'pendiente_pago').length || 0;
@@ -165,6 +170,20 @@
         <div class="stat-card">
           <p class="stat-label">Usuarios</p>
           <p class="stat-num">${usuarios?.length || 0}</p>
+        </div>
+      </div>
+
+      <!-- CONFIGURACION -->
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">Configuracion</h2>
+          <button class="btn-gold" onclick="guardarConfig()">Guardar</button>
+        </div>
+        <div class="funcion-card">
+          <div class="form-group">
+            <label>Numero de WhatsApp (sin espacios ni guiones)</label>
+            <input type="text" id="cfg-whatsapp" value="${whatsapp}" style="max-width:280px" />
+          </div>
         </div>
       </div>
 
@@ -238,7 +257,8 @@
                       </td>
                       <td>
                         ${r.token
-                          ? `<span class="token-link" onclick="copiarToken('${r.token}', '${r.nombre}')">Copiar link</span>`
+                          ? `<span class="token-link" onclick="copiarToken('${r.token}', '${r.nombre}')">Copiar link</span>
+                             ${celular !== '—' ? `<br><a href="https://wa.me/595${celular.replace(/\D/g,'')}?text=${encodeURIComponent('Hola ' + r.nombre + '! Tu acceso a la funcion de Sofacine: https://sofacine.vercel.app/sala?token=' + r.token)}" target="_blank" style="color:#25d366;font-size:0.75rem;text-decoration:none;">Enviar por WhatsApp</a>` : ''}`
                           : `<span style="color:var(--text-dim);font-size:0.78rem;">Sin token</span>`}
                       </td>
                       <td>
@@ -281,6 +301,14 @@
     const link = `https://sofacine.vercel.app/sala?token=${token}`;
     navigator.clipboard.writeText(link);
     mostrarToast(`Link de ${nombre} copiado`);
+  };
+
+  window.guardarConfig = async function() {
+    const whatsapp = document.getElementById('cfg-whatsapp').value.trim();
+    if (!whatsapp) return;
+    const { error } = await supabase.from('config').update({ whatsapp }).eq('id', 1);
+    if (error) { mostrarToast('Error al guardar'); }
+    else { mostrarToast('Numero de WhatsApp actualizado'); }
   };
 
   window.guardarFuncion = async function() {
